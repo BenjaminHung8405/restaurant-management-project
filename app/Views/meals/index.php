@@ -161,12 +161,12 @@ if ($categoryId === '') {
                                 <?php endif; ?>
                             </div>
                             <div class="p-8 flex flex-col flex-1">
-                                <h3 class="text-2xl font-display font-bold text-neutral-900 mb-2 truncate group-hover:text-primary-600 transition-colors"><?php echo htmlspecialchars($item['name'], ENT_QUOTES, 'UTF-8'); ?></h3>
-                                <p class="text-sm text-neutral-500 mb-6 line-clamp-2 leading-relaxed flex-1">
+                                <h3 class="text-2xl font-roboto font-bold text-neutral-900 mb-2 truncate group-hover:text-primary-600 transition-colors"><?php echo htmlspecialchars($item['name'], ENT_QUOTES, 'UTF-8'); ?></h3>
+                                <p class="font-roboto text-sm text-neutral-500 mb-6 line-clamp-2 leading-relaxed flex-1">
                                     <?php echo htmlspecialchars($item['description'] ?: 'Khám phá hương vị tuyệt vời tại RestoMS.', ENT_QUOTES, 'UTF-8'); ?>
                                 </p>
                                 <div class="flex items-center justify-between pt-6 border-t border-neutral-50">
-                                    <span class="text-2xl font-display font-black text-primary-600">
+                                    <span class="text-2xl font-roboto font-black text-primary-600">
                                         <?php echo number_format($item['price'], 0, ',', '.'); ?> <span class="text-sm font-bold opacity-70">đ</span>
                                     </span>
                                     <button 
@@ -296,10 +296,10 @@ if ($categoryId === '') {
                 <!-- Header -->
                 <div class="p-8 pb-4 flex items-start justify-between">
                     <div>
-                        <h2 id="modal-name" class="text-3xl font-display font-black text-neutral-900 leading-tight"></h2>
+                        <h2 id="modal-name" class="text-3xl font-roboto font-black text-neutral-900 leading-tight"></h2>
                         <div class="flex items-baseline gap-2 mt-2">
-                            <span id="modal-price" class="text-3xl font-display font-black text-primary-600"></span>
-                            <span class="text-lg font-bold text-primary-400">đ</span>
+                            <span id="modal-price" class="text-3xl font-roboto font-black text-primary-600"></span>
+                            <span class="font-roboto text-lg font-bold text-primary-400">đ</span>
                         </div>
                     </div>
                     <button onclick="closeMealModal()" class="p-3 rounded-2xl bg-neutral-50 text-neutral-400 hover:text-neutral-900 hover:bg-neutral-100 transition-all active:scale-90">
@@ -309,7 +309,7 @@ if ($categoryId === '') {
 
                 <!-- Scrollable Body -->
                 <div class="px-8 pb-8 overflow-y-auto custom-scrollbar space-y-8">
-                    <p id="modal-description" class="text-neutral-500 leading-relaxed"></p>
+                    <p id="modal-description" class="font-roboto text-neutral-500 leading-relaxed"></p>
 
                     <!-- Quantity Control -->
                     <div class="p-6 rounded-3xl bg-neutral-50 border border-neutral-100">
@@ -318,7 +318,7 @@ if ($categoryId === '') {
                             <button onclick="updateQty(-1)" class="w-14 h-14 flex items-center justify-center rounded-2xl bg-white border border-neutral-200 text-neutral-900 hover:border-primary-500 hover:text-primary-600 transition-all shadow-sm active:scale-95">
                                 <i data-lucide="minus" class="w-6 h-6"></i>
                             </button>
-                            <span id="modal-qty" class="text-3xl font-display font-black text-neutral-900 w-12 text-center">1</span>
+                            <span id="modal-qty" class="text-3xl font-roboto font-black text-neutral-900 w-12 text-center">1</span>
                             <button onclick="updateQty(1)" class="w-14 h-14 flex items-center justify-center rounded-2xl bg-neutral-900 text-white hover:bg-primary-500 transition-all shadow-md active:scale-95">
                                 <i data-lucide="plus" class="w-6 h-6"></i>
                             </button>
@@ -340,8 +340,8 @@ if ($categoryId === '') {
                     <div class="pt-6 border-t border-neutral-100 flex items-center justify-between">
                         <span class="text-sm font-bold text-neutral-400">Thành tiền tạm tính</span>
                         <div class="flex items-baseline gap-1">
-                            <span id="modal-subtotal" class="text-2xl font-display font-black text-neutral-900"></span>
-                            <span class="text-xs font-bold text-neutral-400">đ</span>
+                            <span id="modal-subtotal" class="text-2xl font-roboto font-black text-neutral-900"></span>
+                            <span class="font-roboto text-xs font-bold text-neutral-400">đ</span>
                         </div>
                     </div>
                 </div>

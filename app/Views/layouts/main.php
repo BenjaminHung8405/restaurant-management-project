@@ -10,7 +10,7 @@ $isLoggedIn = isset($_SESSION['user_id']);
     <title><?php echo htmlspecialchars($pageTitle, ENT_QUOTES, 'UTF-8'); ?> | RestoMS — Nhà Hàng Long Xuyên</title>
     
     <!-- Google Fonts -->
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Playfair+Display:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Playfair+Display:wght@400;500;600;700;800;900&family=Roboto:wght@300;400;500;700;900&display=swap" rel="stylesheet">
     
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
@@ -49,6 +49,7 @@ $isLoggedIn = isset($_SESSION['user_id']);
                     fontFamily: {
                         sans: ['Inter', 'sans-serif'],
                         display: ['Playfair Display', 'serif'],
+                        roboto: ['Roboto', 'sans-serif'],
                     },
                     boxShadow: {
                         'card': '0 2px 8px 0 rgb(0 0 0 / 0.08)',
