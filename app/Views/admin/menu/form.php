@@ -1,131 +1,160 @@
-<div class="mb-6 flex items-center gap-3">
-    <a href="/admin/menu" class="p-2 rounded-xl border border-slate-200 bg-white text-slate-500 hover:bg-slate-50 transition-colors">
-        <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
-        </svg>
+<!-- Page Header -->
+<div class="mb-8 flex items-center gap-4">
+    <a href="<?php echo url('/admin/menu'); ?>" class="p-2.5 rounded-xl border border-slate-200 bg-white text-slate-500 hover:bg-slate-50 hover:text-slate-900 transition-all shadow-sm">
+        <i data-lucide="arrow-left" class="w-5 h-5"></i>
     </a>
     <div>
-        <h1 class="text-2xl font-bold text-slate-900"><?php echo $title; ?></h1>
-        <p class="text-slate-600 text-sm">Cung cấp đầy đủ thông tin về món ăn để hiển thị lên thực đơn.</p>
+        <h1 class="text-2xl font-bold text-slate-900 tracking-tight"><?php echo $title; ?></h1>
+        <p class="text-slate-500 text-sm mt-0.5">Vui lòng cung cấp đầy đủ thông tin để hiển thị món ăn trên thực đơn công khai.</p>
     </div>
 </div>
 
+<!-- Error Messages -->
 <?php if (!empty($errors)): ?>
-    <div class="mb-6 rounded-xl border border-red-200 bg-red-50 p-4 text-red-700">
-        <p class="font-bold mb-2">Vui lòng sửa các lỗi sau:</p>
-        <ul class="list-disc pl-5">
+    <div class="mb-8 rounded-2xl border border-red-100 bg-red-50 p-5 text-red-700 animate-fade-in">
+        <div class="flex items-center gap-3 mb-3">
+            <i data-lucide="alert-circle" class="w-5 h-5 flex-shrink-0"></i>
+            <p class="font-bold">Có lỗi xảy ra trong quá trình xử lý:</p>
+        </div>
+        <ul class="list-disc pl-8 space-y-1">
             <?php foreach ($errors as $error): ?>
-                <li><?php echo htmlspecialchars($error, ENT_QUOTES, 'UTF-8'); ?></li>
+                <li class="text-sm font-medium"><?php echo htmlspecialchars($error, ENT_QUOTES, 'UTF-8'); ?></li>
             <?php endforeach; ?>
         </ul>
     </div>
 <?php endif; ?>
 
-<div class="bg-white border border-slate-200 rounded-2xl shadow-sm p-6 md:p-8">
-    <form method="POST" action="<?php echo $isEdit ? '/admin/menu/update' : '/admin/menu/store'; ?>" enctype="multipart/form-data" class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+<!-- Form Container -->
+<div class="bg-white border border-slate-200 rounded-3xl shadow-sm overflow-hidden">
+    <form method="POST" action="<?php echo $isEdit ? url('/admin/menu/update') : url('/admin/menu/store'); ?>" enctype="multipart/form-data" class="grid grid-cols-1 lg:grid-cols-12 gap-0">
         <?php if ($isEdit): ?>
-            <input type="hidden" name="id" value="<?php echo htmlspecialchars((string)$item->id, ENT_QUOTES, 'UTF-8'); ?>">
+            <input type="hidden" name="id" value="<?php echo htmlspecialchars((string)($item->id ?? ''), ENT_QUOTES, 'UTF-8'); ?>">
         <?php endif; ?>
 
-        <div class="lg:col-span-1 space-y-6">
-            <div>
-                <label class="block text-sm font-bold text-slate-700 mb-2">Hình ảnh món ăn</label>
-                <div class="relative group aspect-square rounded-2xl border-2 border-dashed border-slate-300 bg-slate-50 overflow-hidden flex flex-col items-center justify-center transition-all hover:border-teal-500">
-                    <?php if (!empty($item->image_url)): ?>
-                        <img src="/<?php echo htmlspecialchars((string)$item->image_url, ENT_QUOTES, 'UTF-8'); ?>" id="preview" class="absolute inset-0 w-full h-full object-cover">
-                    <?php else: ?>
-                        <div id="placeholder" class="text-center p-4">
-                            <svg xmlns="http://www.w3.org/2000/svg" class="w-10 h-10 text-slate-400 mx-auto mb-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                            </svg>
-                            <p class="text-xs text-slate-500">Kéo thả hoặc click để tải lên</p>
+        <!-- Left: Image Upload & Status (4 columns) -->
+        <div class="lg:col-span-4 p-6 md:p-8 bg-slate-50/50 border-r border-slate-100">
+            <div class="space-y-8">
+                <div>
+                    <label class="block text-sm font-bold text-slate-700 mb-4 tracking-tight">Hình ảnh món ăn</label>
+                    <div class="relative group aspect-square rounded-3xl border-2 border-dashed border-slate-300 bg-white overflow-hidden flex flex-col items-center justify-center transition-all hover:border-primary-500 hover:bg-slate-50 cursor-pointer">
+                        <?php if (!empty($item->image_url)): ?>
+                            <img src="<?php echo url($item->image_url); ?>" id="preview" class="absolute inset-0 w-full h-full object-cover">
+                        <?php else: ?>
+                            <div id="placeholder" class="text-center p-6">
+                                <i data-lucide="image-plus" class="w-10 h-10 text-slate-300 mx-auto mb-3 transition-transform group-hover:scale-110"></i>
+                                <p class="text-xs font-bold text-slate-400">TẢI ẢNH LÊN</p>
+                                <p class="text-[10px] text-slate-300 mt-1 uppercase tracking-widest">(Click để chọn)</p>
+                            </div>
+                            <img id="preview" class="absolute inset-0 w-full h-full object-cover hidden shadow-2xl">
+                        <?php endif; ?>
+                        <input type="file" name="image" id="imageInput" class="absolute inset-0 opacity-0 cursor-pointer" accept="image/*">
+                    </div>
+                </div>
+                
+                <div class="p-5 bg-white rounded-2xl border border-slate-200 border-dashed">
+                    <div class="flex items-center justify-between gap-4">
+                        <div class="grow">
+                            <p class="text-sm font-bold text-slate-800">Trạng thái sẵn sàng</p>
+                            <p class="text-[11px] text-slate-400 font-medium leading-relaxed">Cho phép khách hàng nhìn thấy và đặt món ăn này.</p>
                         </div>
-                        <img id="preview" class="absolute inset-0 w-full h-full object-cover hidden">
-                    <?php endif; ?>
-                    <input type="file" name="image" id="imageInput" class="absolute inset-0 opacity-0 cursor-pointer" accept="image/*">
+                        <label class="relative inline-flex items-center cursor-pointer">
+                            <input type="checkbox" name="is_available" class="sr-only peer" <?php echo (!$isEdit || (isset($item->is_available) && $item->is_available)) ? 'checked' : ''; ?>>
+                            <div class="w-12 h-6.5 bg-slate-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-5.5 peer-checked:after:border-white after:content-[''] after:absolute after:top-[3px] after:left-[3px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary-600 shadow-inner"></div>
+                        </label>
+                    </div>
                 </div>
-                <p class="text-xs text-slate-500 mt-3 italic">* Định dạng hỗ trợ: JPG, PNG, WEBP (Max 2MB).</p>
-            </div>
-            
-            <div class="flex items-center gap-3 p-4 bg-slate-50 rounded-xl border border-slate-200">
-                <div class="grow">
-                    <p class="text-sm font-bold text-slate-800">Trạng thái sẵn sàng</p>
-                    <p class="text-xs text-slate-500">Món ăn có hiển thị cho khách đặt không.</p>
+
+                <div class="flex items-start gap-3 p-4 bg-orange-50/50 rounded-2xl text-orange-700 border border-orange-100">
+                    <i data-lucide="info" class="w-4.5 h-4.5 flex-shrink-0 mt-0.5"></i>
+                    <p class="text-[11px] leading-relaxed font-medium">
+                        Tips: Hình ảnh đẹp, rõ nét sẽ thu hút khách hàng hơn. Khuyên dùng tỉ lệ 1:1, dung lượng < 2MB.
+                    </p>
                 </div>
-                <label class="relative inline-flex items-center cursor-pointer">
-                    <input type="checkbox" name="is_available" class="sr-only peer" <?php echo (!$isEdit || $item->is_available) ? 'checked' : ''; ?>>
-                    <div class="w-11 h-6 bg-slate-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-teal-600"></div>
-                </label>
             </div>
         </div>
 
-        <div class="lg:col-span-2 space-y-6">
-            <div>
-                <label for="name" class="block text-sm font-bold text-slate-700 mb-2">Tên món ăn <span class="text-red-500">*</span></label>
-                <input
-                    id="name"
-                    name="name"
-                    type="text"
-                    value="<?php echo htmlspecialchars((string)($item->name ?? ''), ENT_QUOTES, 'UTF-8'); ?>"
-                    class="w-full rounded-xl border border-slate-300 px-4 py-3 outline-none focus:ring-2 focus:ring-teal-500 transition-all font-medium"
-                    placeholder="Ví dụ: Phở Bò Tái Lăn"
-                    required
-                >
-            </div>
-
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div>
-                    <label for="category_id" class="block text-sm font-bold text-slate-700 mb-2">Danh mục <span class="text-red-500">*</span></label>
-                    <select
-                        id="category_id"
-                        name="category_id"
-                        class="w-full rounded-xl border border-slate-300 px-4 py-3 bg-white outline-none focus:ring-2 focus:ring-teal-500 transition-all font-medium"
-                        required
-                    >
-                        <option value="">-- Chọn danh mục --</option>
-                        <?php foreach ($categories as $category): ?>
-                            <option
-                                value="<?php echo $category['id']; ?>"
-                                <?php echo ($item && $item->category_id == $category['id']) ? 'selected' : ''; ?>
-                            >
-                                <?php echo htmlspecialchars((string)$category['name'], ENT_QUOTES, 'UTF-8'); ?>
-                            </option>
-                        <?php endforeach; ?>
-                    </select>
-                </div>
-
-                <div>
-                    <label for="price" class="block text-sm font-bold text-slate-700 mb-2">Giá (VND) <span class="text-red-500">*</span></label>
+        <!-- Right: Content Fields (8 columns) -->
+        <div class="lg:col-span-8 p-6 md:p-8 space-y-8">
+            <!-- Basic Info -->
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+                <div class="md:col-span-2">
+                    <label for="name" class="block text-sm font-bold text-slate-700 mb-2.5 tracking-tight">Tên món ăn <span class="text-red-500">*</span></label>
                     <input
-                        id="price"
-                        name="price"
-                        type="number"
-                        step="1000"
-                        value="<?php echo (float)($item->price ?? 0); ?>"
-                        class="w-full rounded-xl border border-slate-300 px-4 py-3 outline-none focus:ring-2 focus:ring-teal-500 transition-all font-bold text-teal-700"
-                        placeholder="0"
+                        id="name"
+                        name="name"
+                        type="text"
+                        value="<?php echo htmlspecialchars((string)($item->name ?? ''), ENT_QUOTES, 'UTF-8'); ?>"
+                        class="w-full rounded-2xl border border-slate-200 px-5 py-4 outline-none focus:ring-4 focus:ring-primary-100 focus:border-primary-500 transition-all font-bold text-slate-800 placeholder:text-slate-300"
+                        placeholder="VD: Phở Bò Tái Lăn Đặc Biệt"
                         required
                     >
                 </div>
+
+                <div>
+                    <label for="category_id" class="block text-sm font-bold text-slate-700 mb-2.5 tracking-tight">Danh mục thực đơn <span class="text-red-500">*</span></label>
+                    <div class="relative">
+                        <select
+                            id="category_id"
+                            name="category_id"
+                            class="w-full rounded-2xl border border-slate-200 px-5 py-4 bg-white outline-none focus:ring-4 focus:ring-primary-100 focus:border-primary-500 transition-all font-bold text-slate-800 appearance-none cursor-pointer"
+                            required
+                        >
+                            <option value="">-- Chọn danh mục --</option>
+                            <?php if (isset($categories)): ?>
+                                <?php foreach ($categories as $category): ?>
+                                    <option
+                                        value="<?php echo $category['id']; ?>"
+                                        <?php echo (isset($item) && isset($item->category_id) && $item->category_id == $category['id']) ? 'selected' : ''; ?>
+                                    >
+                                        <?php echo htmlspecialchars((string)$category['name'], ENT_QUOTES, 'UTF-8'); ?>
+                                    </option>
+                                <?php endforeach; ?>
+                            <?php endif; ?>
+                        </select>
+                        <i data-lucide="chevron-down" class="absolute right-5 top-1/2 -translate-y-1/2 w-4.5 h-4.5 text-slate-400 pointer-events-none"></i>
+                    </div>
+                </div>
+
+                <div>
+                    <label for="price" class="block text-sm font-bold text-slate-700 mb-2.5 tracking-tight">Giá niêm yết (VND) <span class="text-red-500">*</span></label>
+                    <div class="relative">
+                        <input
+                            id="price"
+                            name="price"
+                            type="number"
+                            step="1000"
+                            value="<?php echo (float)($item->price ?? 0); ?>"
+                            class="w-full rounded-2xl border border-slate-200 px-5 py-4 pr-16 outline-none focus:ring-4 focus:ring-primary-100 focus:border-primary-500 transition-all font-black text-primary-700 text-lg placeholder:text-slate-200"
+                            placeholder="0"
+                            required
+                        >
+                        <span class="absolute right-5 top-1/2 -translate-y-1/2 text-[11px] font-black text-slate-400 uppercase tracking-widest border-l border-slate-100 pl-4 py-1">VND</span>
+                    </div>
+                </div>
             </div>
 
+            <!-- Description -->
             <div>
-                <label for="description" class="block text-sm font-bold text-slate-700 mb-2">Mô tả món ăn</label>
+                <label for="description" class="block text-sm font-bold text-slate-700 mb-2.5 tracking-tight">Mô tả chi tiết</label>
                 <textarea
                     id="description"
                     name="description"
-                    rows="6"
-                    class="w-full rounded-xl border border-slate-300 px-4 py-3 outline-none focus:ring-2 focus:ring-teal-500 transition-all"
-                    placeholder="Nguyên liệu, cách chế biến, hương vị đặc trưng..."
+                    rows="5"
+                    class="w-full rounded-2xl border border-slate-200 px-5 py-4 outline-none focus:ring-4 focus:ring-primary-100 focus:border-primary-500 transition-all font-medium text-slate-600 placeholder:text-slate-300 leading-relaxed"
+                    placeholder="Nguyên liệu chính, hương vị, khẩu phần, lưu ý khi dùng..."
                 ><?php echo htmlspecialchars((string)($item->description ?? ''), ENT_QUOTES, 'UTF-8'); ?></textarea>
             </div>
 
-            <div class="pt-6 border-t border-slate-100 flex items-center justify-end gap-3">
-                <a href="/admin/menu" class="px-6 py-3 rounded-xl border border-slate-300 font-bold text-slate-600 hover:bg-slate-50 transition-colors">
+            <!-- Action Buttons -->
+            <div class="pt-8 border-t border-slate-100 flex items-center justify-end gap-4">
+                <a href="<?php echo url('/admin/menu'); ?>" class="px-8 py-4 rounded-2xl border border-slate-200 font-bold text-slate-500 hover:bg-slate-50 hover:text-slate-900 transition-all">
                     Hủy bỏ
                 </a>
-                <button type="submit" class="px-10 py-3 rounded-xl bg-teal-600 text-white font-bold hover:bg-teal-700 transition-colors shadow-lg shadow-teal-100">
-                    <?php echo $isEdit ? 'Cập nhật món ăn' : 'Lưu món ăn'; ?>
+                <button type="submit" class="px-12 py-4 rounded-2xl bg-primary-600 text-white font-black hover:bg-primary-700 shadow-xl shadow-primary-500/20 transition-all hover:-translate-y-1 active:translate-y-0">
+                    <div class="flex items-center gap-2">
+                        <i data-lucide="save" class="w-5 h-5"></i>
+                        <span><?php echo $isEdit ? 'Cập nhật món' : 'Lưu món mới'; ?></span>
+                    </div>
                 </button>
             </div>
         </div>
@@ -145,6 +174,9 @@
                 preview.src = e.target.result;
                 preview.classList.remove('hidden');
                 if (placeholder) placeholder.classList.add('hidden');
+                
+                // Add an animation class
+                preview.classList.add('animate-in', 'fade-in', 'zoom-in', 'duration-500');
             }
             reader.readAsDataURL(file);
         }

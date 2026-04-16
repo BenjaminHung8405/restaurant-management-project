@@ -20,7 +20,7 @@
                 </div>
             <?php endif; ?>
 
-            <form method="POST" action="/login" class="space-y-8">
+            <form method="POST" action="<?php echo url('/login'); ?>" class="space-y-8">
                 <div class="space-y-3">
                     <label for="identity" class="block text-sm font-bold text-neutral-700 ml-1">Tên đăng nhập / Email</label>
                     <div class="relative group">

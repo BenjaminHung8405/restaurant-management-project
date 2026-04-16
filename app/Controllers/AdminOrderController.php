@@ -19,7 +19,7 @@ class AdminOrderController extends AdminBaseController
             'reservations' => $reservations,
             'flashSuccess' => $_SESSION['admin_orders_success'] ?? '',
             'flashError' => $_SESSION['admin_orders_error'] ?? ''
-        ));
+        ), 'layouts/admin');
 
         unset($_SESSION['admin_orders_success'], $_SESSION['admin_orders_error']);
     }
@@ -27,7 +27,7 @@ class AdminOrderController extends AdminBaseController
     public function updateStatus()
     {
         if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
-            header('Location: /admin/orders');
+            header('Location: ' . url('/admin/orders'));
             exit;
         }
 
@@ -37,7 +37,7 @@ class AdminOrderController extends AdminBaseController
 
         if ($reservationId === '' || !in_array($newStatus, $allowedStatuses, true)) {
             $_SESSION['admin_orders_error'] = 'Yêu cầu cập nhật trạng thái không hợp lệ.';
-            header('Location: /admin/orders');
+            header('Location: ' . url('/admin/orders'));
             exit;
         }
 
@@ -48,7 +48,7 @@ class AdminOrderController extends AdminBaseController
             $_SESSION['admin_orders_error'] = 'Cập nhật trạng thái thất bại.';
         }
 
-        header('Location: /admin/orders');
+        header('Location: ' . url('/admin/orders'));
         exit;
     }
 }

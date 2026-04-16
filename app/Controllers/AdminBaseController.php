@@ -15,7 +15,7 @@ class AdminBaseController extends BaseController
 
         if (!$currentUser || !in_array($currentRole, array('admin', 'staff'), true)) {
             $_SESSION['auth_error'] = 'Bạn không có quyền truy cập trang quản trị.';
-            header('Location: /login');
+            header('Location: ' . url('/login'));
             exit;
         }
     }

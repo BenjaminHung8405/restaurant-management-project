@@ -93,6 +93,11 @@ if (!function_exists('url')) {
         // Clean up trailing slashes
         $basePath = rtrim($basePath, '/');
 
+        // If the path is already an absolute URL, return it as is
+        if (strpos($path, 'http://') === 0 || strpos($path, 'https://') === 0) {
+            return $path;
+        }
+
         return $basePath . '/' . ltrim($path, '/');
     }
 }

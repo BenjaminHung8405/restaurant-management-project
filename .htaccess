@@ -3,6 +3,7 @@ RewriteEngine On
 # Ensure the RewriteBase is correct for the subdirectory
 # If your project is in http://localhost/php-mvc/, it should be:
 # RewriteBase /php-mvc/
+RewriteBase /php-mvc/
 
 RewriteCond %{REQUEST_FILENAME} !-f
 RewriteCond %{REQUEST_FILENAME} !-d

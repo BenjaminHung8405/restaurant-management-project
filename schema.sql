@@ -1,4 +1,4 @@
-﻿-- Restaurant Management System - MySQL Schema
+-- Restaurant Management System - MySQL Schema
 -- Compatible with Vertigo (MySQL)
 -- Drop existing tables if they exist (optional, for testing)
 
@@ -182,7 +182,7 @@ INSERT INTO users (id, email, password_hash, full_name, phone_number, role)
 VALUES (
   'f47ac10b-58cc-4372-a567-0e02b2c3d479',
   'admin@restaurant.com',
-  '$2a$10$8ug2rwfPD3N8K9HVSE3pnuJKKGJV5Kt.JowFQkqVpYmBSLGGzWzTK',
+  '$2y$10$r6JDGjRaGfxVQc8RbJSOV.Xif86cVJy31FzvOEs8hX1nyG0H2HlGW',
   'Admin User',
   '+1234567890',
   'admin'

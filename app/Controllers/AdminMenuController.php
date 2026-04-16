@@ -22,7 +22,7 @@ class AdminMenuController extends AdminBaseController
             'items' => $items,
             'flashSuccess' => $_SESSION['admin_menu_success'] ?? '',
             'flashError' => $_SESSION['admin_menu_error'] ?? ''
-        ));
+        ), 'layouts/admin');
         unset($_SESSION['admin_menu_success'], $_SESSION['admin_menu_error']);
     }
 
@@ -36,7 +36,7 @@ class AdminMenuController extends AdminBaseController
             'categories' => $categories,
             'item' => null,
             'isEdit' => false
-        ));
+        ), 'layouts/admin');
     }
 
     public function store()
@@ -54,7 +54,7 @@ class AdminMenuController extends AdminBaseController
             $data['id'] = $this->uuid();
             if ($mealModel->create($data)) {
                 $_SESSION['admin_menu_success'] = 'Thêm món ăn thành công.';
-                header('Location: /admin/menu');
+                header('Location: ' . url('/admin/menu'));
                 exit;
             }
             $errors[] = 'Không thể lưu món ăn vào cơ sở dữ liệu.';
@@ -67,7 +67,7 @@ class AdminMenuController extends AdminBaseController
             'item' => (object)$data,
             'isEdit' => false,
             'errors' => $errors
-        ));
+        ), 'layouts/admin');
     }
 
     public function edit()
@@ -78,7 +78,7 @@ class AdminMenuController extends AdminBaseController
 
         if (!$item) {
             $_SESSION['admin_menu_error'] = 'Không tìm thấy món ăn.';
-            header('Location: /admin/menu');
+            header('Location: ' . url('/admin/menu'));
             exit;
         }
 
@@ -88,7 +88,7 @@ class AdminMenuController extends AdminBaseController
             'categories' => $categoryModel->all(),
             'item' => (object)$item,
             'isEdit' => true
-        ));
+        ), 'layouts/admin');
     }
 
     public function update()
@@ -99,7 +99,7 @@ class AdminMenuController extends AdminBaseController
 
         if (!$item) {
             $_SESSION['admin_menu_error'] = 'Không tìm thấy món ăn.';
-            header('Location: /admin/menu');
+            header('Location: ' . url('/admin/menu'));
             exit;
         }
 
@@ -116,7 +116,7 @@ class AdminMenuController extends AdminBaseController
         if (empty($errors)) {
             if ($mealModel->update($id, $data)) {
                 $_SESSION['admin_menu_success'] = 'Cập nhật món ăn thành công.';
-                header('Location: /admin/menu');
+                header('Location: ' . url('/admin/menu'));
                 exit;
             }
             $errors[] = 'Không thể cập nhật món ăn.';
@@ -129,7 +129,7 @@ class AdminMenuController extends AdminBaseController
             'item' => (object)MargeArray($item, $data),
             'isEdit' => true,
             'errors' => $errors
-        ));
+        ), 'layouts/admin');
     }
 
     public function delete()
@@ -144,7 +144,7 @@ class AdminMenuController extends AdminBaseController
             $_SESSION['admin_menu_success'] = 'Đã xóa món ăn thành công.';
         }
 
-        header('Location: /admin/menu');
+        header('Location: ' . url('/admin/menu'));
         exit;
     }
 

@@ -20,10 +20,16 @@ class AuthController extends BaseController
             $this->redirectByRole($_SESSION['user']['role']);
         }
 
+        $errorMessage = '';
+        if (isset($_SESSION['auth_error'])) {
+            $errorMessage = $_SESSION['auth_error'];
+            unset($_SESSION['auth_error']);
+        }
+
         $this->render('auth/login', array(
             'title' => 'Đăng nhập',
             'identity' => '',
-            'errorMessage' => ''
+            'errorMessage' => $errorMessage
         ));
     }
 
@@ -101,7 +107,8 @@ class AuthController extends BaseController
             );
         }
         session_destroy();
-        header('Location: /login');
+        session_write_close();
+        header('Location: ' . url('/login'));
         exit;
     }
 
@@ -109,10 +116,12 @@ class AuthController extends BaseController
     {
         $normalizedRole = strtolower(trim((string) $role));
         if ($normalizedRole === 'admin' || $normalizedRole === 'staff') {
-            header('Location: /admin/orders');
+            session_write_close();
+            header('Location: ' . url('/admin/orders'));
             exit;
         }
-        header('Location: /');
+        session_write_close();
+        header('Location: ' . url('/'));
         exit;
     }
 }
