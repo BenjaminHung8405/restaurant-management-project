@@ -275,13 +275,13 @@ if ($categoryId === '') {
     <?php endif; ?>
 </div>
 
-<!-- DEBUG MARKER: MODAL VERSION 1.1 -->
+<!-- Popup Đặt Món -->
 <div id="meal-modal" class="fixed inset-0 z-[100] hidden items-center justify-center">
-    <div class="fixed inset-0 bg-neutral-900/60 backdrop-blur-md opacity-0 transition-opacity duration-300 pointer-events-none modal-backdrop z-10"></div>
+    <div class="fixed inset-0 bg-neutral-900/60 backdrop-blur-md opacity-0 transition-opacity duration-300 pointer-events-none modal-backdrop z-10" onclick="closeMealModal()"></div>
     
     <!-- Modal Container -->
-    <div class="absolute inset-0 flex items-center justify-center p-4 z-20">
-        <div class="bg-white w-full max-w-4xl max-h-[90vh] rounded-[2.5rem] shadow-2xl overflow-hidden flex flex-col md:flex-row modal-content relative z-30 transition-all duration-300 border-4 border-red-500" style="display: flex !important; opacity: 1 !important; visibility: visible !important;">
+    <div class="absolute inset-0 flex items-center justify-center p-4 z-20 pointer-events-none">
+        <div class="bg-white w-full max-w-4xl max-h-[90vh] rounded-[2.5rem] shadow-2xl overflow-hidden flex flex-col md:flex-row modal-content relative z-30 transition-all duration-300 transform scale-95 opacity-0 pointer-events-auto">
             
             <!-- Left: Image Section -->
             <div id="modal-image-container" class="relative w-full h-48 md:h-auto md:w-1/2 bg-neutral-100 flex-shrink-0">
@@ -413,13 +413,17 @@ if ($categoryId === '') {
         modal.classList.remove('hidden');
         modal.classList.add('flex'); // Ensure it's flex for centering
         
+        content.classList.remove('scale-95', 'opacity-0');
+        content.classList.add('scale-100', 'opacity-100');
+        content.classList.remove('pointer-events-none');
+        content.classList.add('pointer-events-auto');
+
         setTimeout(() => {
             backdrop.classList.remove('opacity-0');
             backdrop.classList.add('opacity-100');
             backdrop.classList.remove('pointer-events-none');
             backdrop.classList.add('pointer-events-auto');
             
-            // Content is already visible (opacity-100 by default now), but we can add effects if desired
         }, 50);
 
         document.body.style.overflow = 'hidden';
@@ -439,8 +443,11 @@ if ($categoryId === '') {
         
         content.classList.remove('scale-100', 'opacity-100');
         content.classList.add('scale-95', 'opacity-0');
+        content.classList.remove('pointer-events-auto');
+        content.classList.add('pointer-events-none');
 
         setTimeout(() => {
+            modal.classList.remove('flex');
             modal.classList.add('hidden');
             document.body.style.overflow = '';
         }, 300);
@@ -518,6 +525,13 @@ if ($categoryId === '') {
     }
 
     document.addEventListener('DOMContentLoaded', () => {
+        // Move modal outside of any transform containers (like .animate-fade-in) 
+        // to ensure position: fixed works properly relative to the viewport.
+        const modal = document.getElementById('meal-modal');
+        if (modal) {
+            document.body.appendChild(modal);
+        }
+
         const scrollContainer = document.getElementById('featured-scroll');
         const prevBtn = document.getElementById('featured-prev');
         const nextBtn = document.getElementById('featured-next');
@@ -533,7 +547,10 @@ if ($categoryId === '') {
         
         // Handle ESC key to close modal
         document.addEventListener('keydown', (e) => {
-            if (e.key === 'Escape') closeMealModal();
+            const modal = document.getElementById('meal-modal');
+            if (e.key === 'Escape' && modal && !modal.classList.contains('hidden')) {
+                closeMealModal();
+            }
         });
     });
 </script>
