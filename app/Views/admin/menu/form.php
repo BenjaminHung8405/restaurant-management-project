@@ -26,7 +26,7 @@
 
 <!-- Form Container -->
 <div class="bg-white border border-slate-200 rounded-3xl shadow-sm overflow-hidden">
-    <form method="POST" action="<?php echo $isEdit ? url('/admin/menu/update') : url('/admin/menu/store'); ?>" enctype="multipart/form-data" class="grid grid-cols-1 lg:grid-cols-12 gap-0">
+    <form method="POST" action="<?php echo $isEdit ? url('/admin/menu/update') : url('/admin/menu/store'); ?>" enctype="multipart/form-data" autocomplete="off" class="grid grid-cols-1 lg:grid-cols-12 gap-0">
         <?php if ($isEdit): ?>
             <input type="hidden" name="id" value="<?php echo htmlspecialchars((string)($item->id ?? ''), ENT_QUOTES, 'UTF-8'); ?>">
         <?php endif; ?>
@@ -59,7 +59,20 @@
                         </div>
                         <label class="relative inline-flex items-center cursor-pointer">
                             <input type="checkbox" name="is_available" class="sr-only peer" <?php echo (!$isEdit || (isset($item->is_available) && $item->is_available)) ? 'checked' : ''; ?>>
-                            <div class="w-12 h-6.5 bg-slate-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-5.5 peer-checked:after:border-white after:content-[''] after:absolute after:top-[3px] after:left-[3px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary-600 shadow-inner"></div>
+                            <div class="w-12 h-7 bg-slate-300 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-5 peer-checked:after:border-white after:content-[''] after:absolute after:top-[4px] after:left-[4px] after:bg-white after:border-slate-200 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-emerald-500 shadow-inner overflow-hidden"></div>
+                        </label>
+                    </div>
+                </div>
+
+                <div class="p-5 bg-white rounded-2xl border border-slate-200 border-dashed">
+                    <div class="flex items-center justify-between gap-4">
+                        <div class="grow">
+                            <p class="text-sm font-bold text-slate-800">Món ăn nổi bật</p>
+                            <p class="text-[11px] text-slate-400 font-medium leading-relaxed">Hiển thị món ăn ở vị trí ưu tiên hoặc trang chủ.</p>
+                        </div>
+                        <label class="relative inline-flex items-center cursor-pointer">
+                            <input type="checkbox" name="is_featured" class="sr-only peer" <?php echo (isset($item->is_featured) && $item->is_featured) ? 'checked' : ''; ?>>
+                            <div class="w-12 h-7 bg-slate-300 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-5 peer-checked:after:border-white after:content-[''] after:absolute after:top-[4px] after:left-[4px] after:bg-white after:border-slate-200 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-orange-500 shadow-inner overflow-hidden"></div>
                         </label>
                     </div>
                 </div>
@@ -86,6 +99,10 @@
                         value="<?php echo htmlspecialchars((string)($item->name ?? ''), ENT_QUOTES, 'UTF-8'); ?>"
                         class="w-full rounded-2xl border border-slate-200 px-5 py-4 outline-none focus:ring-4 focus:ring-primary-100 focus:border-primary-500 transition-all font-bold text-slate-800 placeholder:text-slate-300"
                         placeholder="VD: Phở Bò Tái Lăn Đặc Biệt"
+                        autocomplete="off"
+                        autocapitalize="off"
+                        autocorrect="off"
+                        spellcheck="false"
                         required
                     >
                 </div>
@@ -126,9 +143,29 @@
                             value="<?php echo (float)($item->price ?? 0); ?>"
                             class="w-full rounded-2xl border border-slate-200 px-5 py-4 pr-16 outline-none focus:ring-4 focus:ring-primary-100 focus:border-primary-500 transition-all font-black text-primary-700 text-lg placeholder:text-slate-200"
                             placeholder="0"
+                            autocomplete="off"
                             required
                         >
                         <span class="absolute right-5 top-1/2 -translate-y-1/2 text-[11px] font-black text-slate-400 uppercase tracking-widest border-l border-slate-100 pl-4 py-1">VND</span>
+                    </div>
+                </div>
+
+                <div>
+                    <label for="area" class="block text-sm font-bold text-slate-700 mb-2.5 tracking-tight">Khu vực / Phong cách</label>
+                    <div class="relative">
+                        <input
+                            id="area"
+                            name="area"
+                            type="text"
+                            value="<?php echo htmlspecialchars((string)($item->area ?? ''), ENT_QUOTES, 'UTF-8'); ?>"
+                            class="w-full rounded-2xl border border-slate-200 px-5 py-4 pl-12 outline-none focus:ring-4 focus:ring-primary-100 focus:border-primary-500 transition-all font-bold text-slate-800 placeholder:text-slate-300"
+                            placeholder="VD: Vietnamese, Thai, French..."
+                            autocomplete="off"
+                            autocapitalize="off"
+                            autocorrect="off"
+                            spellcheck="false"
+                        >
+                        <i data-lucide="map-pin" class="absolute left-5 top-1/2 -translate-y-1/2 w-4.5 h-4.5 text-slate-400 pointer-events-none"></i>
                     </div>
                 </div>
             </div>
@@ -142,6 +179,10 @@
                     rows="5"
                     class="w-full rounded-2xl border border-slate-200 px-5 py-4 outline-none focus:ring-4 focus:ring-primary-100 focus:border-primary-500 transition-all font-medium text-slate-600 placeholder:text-slate-300 leading-relaxed"
                     placeholder="Nguyên liệu chính, hương vị, khẩu phần, lưu ý khi dùng..."
+                    autocomplete="off"
+                    autocapitalize="off"
+                    autocorrect="off"
+                    spellcheck="false"
                 ><?php echo htmlspecialchars((string)($item->description ?? ''), ENT_QUOTES, 'UTF-8'); ?></textarea>
             </div>
 

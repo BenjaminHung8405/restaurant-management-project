@@ -64,15 +64,28 @@
                                         <?php endif; ?>
                                     </div>
                                     <div class="min-w-0">
-                                        <p class="font-bold text-slate-900 truncate"><?php echo htmlspecialchars((string) $item['name'], ENT_QUOTES, 'UTF-8'); ?></p>
+                                        <div class="flex items-center gap-2">
+                                            <p class="font-bold text-slate-900 truncate"><?php echo htmlspecialchars((string) $item['name'], ENT_QUOTES, 'UTF-8'); ?></p>
+                                            <?php if (isset($item['is_featured']) && (int)$item['is_featured'] === 1): ?>
+                                                <i data-lucide="star" class="w-3.5 h-3.5 fill-orange-400 text-orange-400" title="Món nổi bật"></i>
+                                            <?php endif; ?>
+                                        </div>
                                         <p class="text-xs text-slate-500 truncate max-w-[200px]"><?php echo htmlspecialchars((string) ($item['description'] ?? ''), ENT_QUOTES, 'UTF-8'); ?></p>
                                     </div>
                                 </div>
                             </td>
                             <td class="px-6 py-4">
-                                <span class="px-2.5 py-1 rounded-lg bg-orange-50 text-orange-600 text-[11px] font-bold uppercase tracking-wider">
-                                    <?php echo htmlspecialchars((string) ($item['category_name'] ?? 'Mặc định'), ENT_QUOTES, 'UTF-8'); ?>
-                                </span>
+                                <div class="flex flex-col gap-1.5">
+                                    <span class="inline-flex w-fit px-2.5 py-1 rounded-lg bg-orange-50 text-orange-600 text-[11px] font-bold uppercase tracking-wider">
+                                        <?php echo htmlspecialchars((string) ($item['category_name'] ?? 'Mặc định'), ENT_QUOTES, 'UTF-8'); ?>
+                                    </span>
+                                    <?php if (!empty($item['area'])): ?>
+                                        <span class="inline-flex items-center gap-1 text-[10px] text-slate-400 font-medium lowercase italic">
+                                            <i data-lucide="map-pin" class="w-3 h-3"></i>
+                                            <?php echo htmlspecialchars((string) $item['area'], ENT_QUOTES, 'UTF-8'); ?>
+                                        </span>
+                                    <?php endif; ?>
+                                </div>
                             </td>
                             <td class="px-6 py-4 text-right font-bold text-slate-900">
                                 <?php echo number_format((float) $item['price'], 0, ',', '.'); ?> <span class="text-[10px] text-slate-400 font-medium">VND</span>

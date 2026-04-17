@@ -86,9 +86,9 @@ class Meal extends BaseModel
     {
         $sql = '
             INSERT INTO ' . $this->table . ' (
-                id, name, description, price, image_url, category_id, is_available
+                id, name, description, price, image_url, area, category_id, is_available, is_featured
             ) VALUES (
-                :id, :name, :description, :price, :image_url, :category_id, :is_available
+                :id, :name, :description, :price, :image_url, :area, :category_id, :is_available, :is_featured
             )
         ';
         $statement = $this->db->prepare($sql);

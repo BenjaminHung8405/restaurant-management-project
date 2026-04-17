@@ -155,7 +155,9 @@ class AdminMenuController extends AdminBaseController
             'category_id' => trim((string)($_POST['category_id'] ?? '')),
             'price' => (float)($_POST['price'] ?? 0),
             'description' => trim((string)($_POST['description'] ?? '')),
-            'is_available' => isset($_POST['is_available']) ? 1 : 0
+            'area' => trim((string)($_POST['area'] ?? '')),
+            'is_available' => isset($_POST['is_available']) ? 1 : 0,
+            'is_featured' => isset($_POST['is_featured']) ? 1 : 0
         );
     }
 
@@ -165,6 +167,7 @@ class AdminMenuController extends AdminBaseController
         if ($data['name'] === '') $errors[] = 'Tên món ăn không được để trống.';
         if ($data['category_id'] === '') $errors[] = 'Vui lòng chọn danh mục.';
         if ($data['price'] <= 0) $errors[] = 'Giá món phải lớn hơn 0.';
+        if (strlen($data['area']) > 100) $errors[] = 'Khu vực không được vượt quá 100 ký tự.';
         return $errors;
     }
 
