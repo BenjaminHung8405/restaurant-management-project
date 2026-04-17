@@ -19,34 +19,12 @@ class ReservationController extends BaseController
 
     public function index()
     {
-        $cart = isset($_SESSION['cart']) && is_array($_SESSION['cart']) ? $_SESSION['cart'] : array();
-        if (empty($cart)) {
-            header('Location: /menu');
-            exit;
-        }
-
-        $mealModel = new Meal();
-        $cartItems = array();
-        $grandTotal = 0;
-
-        foreach ($cart as $id => $quantity) {
-            $item = $mealModel->find($id);
-            if ($item) {
-                $item['quantity'] = $quantity;
-                $item['subtotal'] = $item['price'] * $quantity;
-                $cartItems[] = $item;
-                $grandTotal += $item['subtotal'];
-            }
-        }
-
         $this->render('reservations/create', array(
-            'title' => 'Đặt bàn / Thanh toán',
-            'cartItems' => $cartItems,
-            'grandTotal' => $grandTotal,
+            'title' => 'Đặt bàn nhanh',
             'formData' => array(
                 'guest_name' => '',
                 'guest_phone' => '',
-                'reservation_date' => '',
+                'reservation_date' => date('Y-m-d'),
                 'reservation_time' => '',
                 'party_size' => 2,
                 'notes' => ''
@@ -56,28 +34,7 @@ class ReservationController extends BaseController
 
     public function store()
     {
-        $cart = isset($_SESSION['cart']) && is_array($_SESSION['cart']) ? $_SESSION['cart'] : array();
-        if (empty($cart)) {
-            header('Location: /menu');
-            exit;
-        }
-
-        $mealModel = new Meal();
         $reservationModel = new Reservation();
-        $tableModel = new Table();
-        $orderModel = new Order();
-
-        $cartItems = array();
-        $grandTotal = 0;
-        foreach ($cart as $id => $quantity) {
-            $item = $mealModel->find($id);
-            if ($item) {
-                $item['quantity'] = $quantity;
-                $item['subtotal'] = $item['price'] * $quantity;
-                $cartItems[] = $item;
-                $grandTotal += $item['subtotal'];
-            }
-        }
 
         $formData = array(
             'guest_name' => trim((string) ($_POST['guest_name'] ?? '')),
@@ -105,8 +62,8 @@ class ReservationController extends BaseController
                 
                 $reservationModel->create(array(
                     'id' => $reservationId,
-                    'user_id' => null,
-                    'table_id' => null, // Will assign later
+                    'user_id' => isset($_SESSION['user_id']) ? $_SESSION['user_id'] : null,
+                    'table_id' => null, 
                     'reservation_time' => $reservationDateTime,
                     'guest_count' => $formData['party_size'],
                     'guest_name' => $formData['guest_name'],
@@ -115,36 +72,9 @@ class ReservationController extends BaseController
                     'status' => 'pending'
                 ));
 
-                // Table assignment logic (simplified)
-                $tables = $tableModel->getAllAvailable();
-                $assignedTableId = null;
-                foreach ($tables as $table) {
-                    if ($table['capacity'] >= $formData['party_size']) {
-                        $assignedTableId = $table['id'];
-                        break;
-                    }
-                }
-
-                if ($assignedTableId) {
-                    $orderId = $this->uuid();
-                    $orderModel->create(array(
-                        'id' => $orderId,
-                        'user_id' => null,
-                        'table_id' => $assignedTableId,
-                        'total_amount' => $grandTotal,
-                        'order_status' => 'pending',
-                        'payment_status' => 'unpaid'
-                    ));
-
-                    $orderModel->addItems($orderId, $cartItems);
-                }
-
-                unset($_SESSION['cart']);
-                
                 $this->render('reservations/success', array(
                     'title' => 'Đặt bàn thành công',
-                    'reservationId' => $reservationId,
-                    'grandTotal' => $grandTotal
+                    'reservationId' => $reservationId
                 ));
                 return;
 
@@ -155,9 +85,7 @@ class ReservationController extends BaseController
         }
 
         $this->render('reservations/create', array(
-            'title' => 'Đặt bàn / Thanh toán',
-            'cartItems' => $cartItems,
-            'grandTotal' => $grandTotal,
+            'title' => 'Đặt bàn nhanh',
             'formData' => $formData,
             'errors' => $errors
         ));

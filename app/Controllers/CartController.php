@@ -3,6 +3,9 @@
 namespace App\Controllers;
 
 use App\Models\Meal;
+use App\Models\Order;
+use App\Models\Table;
+use Throwable;
 
 class CartController extends BaseController
 {
@@ -175,5 +178,85 @@ class CartController extends BaseController
         $url = isset($_SERVER['HTTP_REFERER']) ? $_SERVER['HTTP_REFERER'] : '/menu';
         header('Location: ' . $url);
         exit;
+    }
+
+    public function placeOrder()
+    {
+        $cart = isset($_SESSION['cart']) && is_array($_SESSION['cart']) ? $_SESSION['cart'] : array();
+        
+        if (empty($cart)) {
+            header('Location: /menu');
+            exit;
+        }
+
+        // Simulate Table ID (usually from QR scan)
+        // For demo, we check session or default to a demo table
+        $tableId = isset($_SESSION['table_id']) ? $_SESSION['table_id'] : null;
+
+        if (!$tableId) {
+            // Check if there are any tables available
+            $tableModel = new Table();
+            $tables = $tableModel->getAllAvailable();
+            if (!empty($tables)) {
+                $tableId = $tables[0]['id']; // Assign first available table for demo
+                $_SESSION['table_id'] = $tableId;
+            } else {
+                // Fallback or error
+                header('Location: /cart?error=no_table_available');
+                exit;
+            }
+        }
+
+        $mealModel = new Meal();
+        $orderModel = new Order();
+        
+        $cartItems = array();
+        $grandTotal = 0;
+        
+        foreach ($cart as $cartItem) {
+            $item = $mealModel->find($cartItem['meal_id']);
+            if ($item) {
+                $item['quantity'] = $cartItem['quantity'];
+                $item['notes'] = $cartItem['notes'];
+                $item['subtotal'] = $item['price'] * $cartItem['quantity'];
+                $cartItems[] = $item;
+                $grandTotal += $item['subtotal'];
+            }
+        }
+
+        try {
+            $orderId = $this->uuid();
+            $orderModel->create(array(
+                'id' => $orderId,
+                'user_id' => isset($_SESSION['user_id']) ? $_SESSION['user_id'] : null,
+                'table_id' => $tableId,
+                'total_amount' => $grandTotal,
+                'order_status' => 'pending',
+                'payment_status' => 'unpaid'
+            ));
+
+            $orderModel->addItems($orderId, $cartItems);
+
+            // Clear cart
+            unset($_SESSION['cart']);
+
+            $this->render('cart/success', array(
+                'title' => 'Đặt món thành công',
+                'orderId' => $orderId,
+                'total' => $grandTotal
+            ));
+        } catch (Throwable $e) {
+            error_log('Order error: ' . $e->getMessage());
+            header('Location: /cart?error=order_failed');
+            exit;
+        }
+    }
+
+    private function uuid()
+    {
+        $data = random_bytes(16);
+        $data[6] = chr((ord($data[6]) & 0x0f) | 0x40);
+        $data[8] = chr((ord($data[8]) & 0x3f) | 0x80);
+        return vsprintf('%s%s-%s-%s-%s-%s%s%s', str_split(bin2hex($data), 4));
     }
 }
