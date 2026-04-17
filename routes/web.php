@@ -38,6 +38,7 @@ return function (Router $router) {
     $router->get('/cart', array(CartController::class, 'index'));
     $router->get('/cart/add', array(CartController::class, 'add'));
     $router->post('/cart/add', array(CartController::class, 'add'));
+    $router->get('/cart/status', array(CartController::class, 'status'));
     $router->get('/cart/status_bar', array(CartController::class, 'statusBar'));
     $router->get('/cart/remove', array(CartController::class, 'remove'));
     $router->get('/cart/update', array(CartController::class, 'update'));

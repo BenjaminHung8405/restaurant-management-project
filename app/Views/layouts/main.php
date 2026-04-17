@@ -3,7 +3,7 @@ $pageTitle = isset($title) ? $title : 'RestoMS';
 $isLoggedIn = isset($_SESSION['user_id']);
 ?>
 <!DOCTYPE html>
-<html lang="vi" class="scroll-smooth">
+<html lang="vi" class="scroll-smooth overflow-x-hidden">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -72,6 +72,9 @@ $isLoggedIn = isset($_SESSION['user_id']);
     
     <!-- Lucide Icons -->
     <script src="https://unpkg.com/lucide@latest"></script>
+    
+    <!-- Custom Styles (Ensuring public/ prefix for subdirectory routing) -->
+    <link rel="stylesheet" href="<?php echo url('/public/css/style.css'); ?>">
 </head>
 <body class="selection:bg-primary-100 selection:text-primary-700 overflow-x-hidden">
     
@@ -79,66 +82,119 @@ $isLoggedIn = isset($_SESSION['user_id']);
     <header class="sticky top-0 z-50 glass h-16 border-b border-neutral-100 transition-all duration-200">
         <nav class="max-w-7xl mx-auto px-4 sm:px-8 h-full flex items-center justify-between">
             <!-- Logo -->
-            <a href="<?php echo url('/'); ?>" class="flex items-center gap-2.5 font-display font-black text-2xl tracking-tight text-neutral-900 hover:text-primary-500 transition-colors">
-                <div class="bg-primary-500 p-2 rounded-xl text-white shadow-sm">
-                    <i data-lucide="utensils-crossed" class="w-5 h-5"></i>
+            <a href="<?php echo url('/'); ?>" class="flex items-center gap-3 font-display font-black text-2xl tracking-tight text-neutral-900 group transition-all duration-300">
+                <div class="relative">
+                    <div class="bg-primary-500 p-2 rounded-xl text-white shadow-lg shadow-primary-500/30 group-hover:scale-110 group-hover:rotate-6 transition-all duration-300">
+                        <i data-lucide="utensils-crossed" class="w-5 h-5"></i>
+                    </div>
                 </div>
-                <span>Resto<span class="text-primary-500">MS</span></span>
+                <span class="flex items-center">
+                    <span class="text-neutral-900 group-hover:text-primary-600 transition-colors">Resto</span>
+                    <span class="text-primary-500">MS</span>
+                </span>
             </a>
 
             <!-- Desktop Menu -->
             <div class="hidden md:flex items-center gap-1">
-                <a href="<?php echo url('/'); ?>" class="px-4 py-2 rounded-lg text-sm font-medium text-neutral-600 hover:text-primary-500 hover:bg-primary-50 transition-all">Trang chủ</a>
-                <a href="<?php echo url('/menu'); ?>" class="px-4 py-2 rounded-lg text-sm font-medium text-neutral-600 hover:text-primary-500 hover:bg-primary-50 transition-all">Thực đơn</a>
-                <button onclick="openReservationModal()" class="px-4 py-2 rounded-lg text-sm font-medium text-neutral-600 hover:text-primary-500 hover:bg-primary-50 transition-all cursor-pointer">Đặt bàn</button>
+                <a href="<?php echo url('/'); ?>" class="px-4 py-2 rounded-lg text-sm font-medium text-neutral-600 hover:text-primary-500 hover:bg-white transition-all">Trang chủ</a>
+                <a href="<?php echo url('/menu'); ?>" class="px-4 py-2 rounded-lg text-sm font-medium text-neutral-600 hover:text-primary-500 hover:bg-white transition-all">Thực đơn</a>
+                <button onclick="openReservationModal()" class="px-4 py-2 rounded-lg text-sm font-medium text-neutral-600 hover:text-primary-500 hover:bg-white transition-all cursor-pointer">Đặt bàn</button>
                 
                 <div class="h-4 w-px bg-neutral-200 mx-2"></div>
 
+                <!-- Desktop Cart -->
+                <a href="<?php echo url('/cart'); ?>" class="relative group p-2 mx-1 text-neutral-600 hover:text-primary-500 transition-all" aria-label="Giỏ hàng">
+                    <i data-lucide="shopping-cart" class="w-5 h-5"></i>
+                    <span id="cart-badge-desktop" class="cart-badge hidden">0</span>
+                </a>
+
                 <?php if ($isLoggedIn): ?>
-                    <a href="<?php echo url('/admin/dashboard'); ?>" class="flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium text-neutral-700 hover:text-primary-500 hover:bg-primary-50 transition-all">
-                        <i data-lucide="layout-dashboard" class="w-4 h-4"></i> Dashboard
+                    <a href="<?php echo url('/admin/dashboard'); ?>" class="ml-2 flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-semibold text-neutral-700 hover:bg-neutral-100 transition-all">
+                        <i data-lucide="layout-dashboard" class="w-4 h-4 text-primary-500"></i> Dashboard
                     </a>
-                    <a href="<?php echo url('/logout'); ?>" class="ml-2 px-4 py-2 rounded-lg bg-neutral-100 text-sm font-bold text-neutral-700 hover:bg-neutral-200 transition-all">
+                    <a href="<?php echo url('/logout'); ?>" class="ml-2 px-4 py-1.5 rounded-lg border border-neutral-200 text-xs font-bold text-neutral-500 hover:bg-neutral-50 transition-all">
                         Đăng xuất
                     </a>
                 <?php else: ?>
-                    <a href="<?php echo url('/login'); ?>" class="px-4 py-2 rounded-lg text-sm font-medium text-neutral-700 hover:text-primary-500 transition-all">Đăng nhập</a>
-                    <button onclick="openReservationModal()" class="ml-2 px-6 py-2 rounded-xl bg-primary-500 text-sm font-bold text-white shadow-lg shadow-primary-500/20 hover:bg-primary-600 hover:-translate-y-0.5 transition-all active:translate-y-0 text-center min-w-[130px] cursor-pointer">
+                    <button onclick="openReservationModal()" class="ml-3 px-6 py-2.5 rounded-xl bg-primary-500 text-sm font-bold text-white shadow-lg shadow-primary-500/25 hover:bg-primary-600 hover:shadow-primary-500/40 hover:-translate-y-0.5 transition-all active:translate-y-0 cursor-pointer">
                         Bắt đầu
                     </button>
                 <?php endif; ?>
             </div>
 
-            <!-- Right Actions (Mobile) -->
-            <div class="flex items-center gap-2 md:hidden">
-                <a href="<?php echo url('/cart'); ?>" class="p-2 text-neutral-600 hover:text-primary-500 transition-colors">
+            <!-- Right Actions (Mobile Toggle) -->
+            <div class="flex items-center gap-3 md:hidden">
+                <a href="<?php echo url('/cart'); ?>" class="relative p-2 text-neutral-700 hover:text-primary-500 transition-all">
                     <i data-lucide="shopping-cart" class="w-6 h-6"></i>
+                    <span id="cart-badge-mobile" class="cart-badge hidden">0</span>
                 </a>
-                <button onclick="toggleMobileMenu()" class="p-2 text-neutral-600 cursor-pointer">
-                    <i id="mobile-menu-icon" data-lucide="menu" class="w-6 h-6 transition-transform duration-200"></i>
+                <button onclick="toggleMobileMenu()" class="p-2 -mr-2 text-neutral-700 cursor-pointer" aria-label="Mở menu">
+                    <i id="mobile-menu-icon" data-lucide="menu" class="w-7 h-7"></i>
                 </button>
             </div>
         </nav>
         
-        <!-- Mobile Navigation Menu -->
-        <div id="mobile-menu" class="hidden md:hidden border-t border-neutral-100 bg-white/95 backdrop-blur-md animate-slide-down">
-            <div class="px-4 py-6 space-y-4">
-                <a href="<?php echo url('/'); ?>" class="block px-4 py-2 text-base font-medium text-neutral-600 hover:text-primary-500 hover:bg-primary-50 rounded-lg">Trang chủ</a>
-                <a href="<?php echo url('/menu'); ?>" class="block px-4 py-2 text-base font-medium text-neutral-600 hover:text-primary-500 hover:bg-primary-50 rounded-lg">Thực đơn</a>
-                <button onclick="openReservationModal(); toggleMobileMenu();" class="w-full text-left px-4 py-2 text-base font-medium text-neutral-600 hover:text-primary-500 hover:bg-primary-50 rounded-lg">Đặt bàn</button>
+    </header>
+
+    <!-- Mobile Sidebar Drawer (Defensive Tailwind classes for fallback hiding) -->
+    <div id="drawer-overlay" class="drawer-overlay fixed inset-0 z-[55] bg-slate-900/40 backdrop-blur-sm opacity-0 invisible transition-all duration-300" onclick="toggleMobileMenu()"></div>
+    <div id="mobile-drawer" class="mobile-drawer fixed top-0 right-0 z-[60] w-[280px] h-full bg-white shadow-2xl translate-x-full transition-transform duration-300 ease-in-out">
+        <div class="flex flex-col h-full">
+            <!-- Drawer Header -->
+            <div class="h-16 flex items-center justify-between px-6 border-b border-neutral-100">
+                <span class="font-display font-bold text-lg text-neutral-900">Điều hướng</span>
+                <button onclick="toggleMobileMenu()" class="p-2 text-neutral-400 hover:text-neutral-900 transition-colors">
+                    <i data-lucide="x" class="w-6 h-6"></i>
+                </button>
+            </div>
+
+            <!-- Drawer Links -->
+            <div class="flex-1 overflow-y-auto py-6 px-4 space-y-2">
+                <a href="<?php echo url('/'); ?>" class="flex items-center gap-3 px-4 py-3 text-base font-medium text-neutral-600 hover:text-primary-50 hover:bg-primary-50 rounded-xl transition-all">
+                    <i data-lucide="home" class="w-5 h-5"></i> Trang chủ
+                </a>
+                <a href="<?php echo url('/menu'); ?>" class="flex items-center gap-3 px-4 py-3 text-base font-medium text-neutral-600 hover:text-primary-50 hover:bg-primary-50 rounded-xl transition-all">
+                    <i data-lucide="book-open" class="w-5 h-5"></i> Thực đơn
+                </a>
+                <button onclick="openReservationModal(); toggleMobileMenu();" class="w-full flex items-center gap-3 px-4 py-3 text-base font-medium text-neutral-600 hover:text-primary-50 hover:bg-primary-50 rounded-xl transition-all cursor-pointer">
+                    <i data-lucide="calendar" class="w-5 h-5"></i> Đặt bàn
+                </button>
                 
-                <div class="pt-4 border-t border-neutral-100">
+                <div class="pt-4 mt-4 border-t border-neutral-100">
                     <?php if ($isLoggedIn): ?>
-                        <a href="<?php echo url('/admin/dashboard'); ?>" class="block px-4 py-2 text-base font-medium text-neutral-700">Dashboard</a>
-                        <a href="<?php echo url('/logout'); ?>" class="block px-4 py-2 text-base font-medium text-red-600">Đăng xuất</a>
+                        <div class="px-4 py-2 text-xs font-semibold text-neutral-400 uppercase tracking-wider">Tài khoản</div>
+                        <a href="<?php echo url('/admin/dashboard'); ?>" class="flex items-center gap-3 px-4 py-3 text-base font-medium text-neutral-700 hover:bg-neutral-50 rounded-xl">
+                            <i data-lucide="layout-dashboard" class="w-5 h-5"></i> Dashboard
+                        </a>
+                        <a href="<?php echo url('/logout'); ?>" class="flex items-center gap-3 px-4 py-3 text-base font-medium text-red-600 hover:bg-red-50 rounded-xl">
+                            <i data-lucide="log-out" class="w-5 h-5"></i> Đăng xuất
+                        </a>
                     <?php else: ?>
-                        <a href="<?php echo url('/login'); ?>" class="block px-4 py-2 text-base font-medium text-neutral-700">Đăng nhập</a>
-                        <button onclick="openReservationModal(); toggleMobileMenu();" class="mt-2 w-full px-6 py-3 rounded-xl bg-primary-500 text-white font-bold shadow-lg shadow-primary-500/20">Bắt đầu ngay</button>
+                        <a href="<?php echo url('/login'); ?>" class="flex items-center gap-3 px-4 py-3 text-base font-medium text-neutral-700 hover:bg-neutral-50 rounded-xl">
+                            <i data-lucide="log-in" class="w-5 h-5"></i> Đăng nhập
+                        </a>
+                        <button onclick="openReservationModal(); toggleMobileMenu();" class="mt-4 w-full py-4 rounded-xl bg-primary-500 text-white font-bold shadow-lg shadow-primary-500/20 active:scale-[0.98] transition-all">
+                            Bắt đầu ngay
+                        </button>
                     <?php endif; ?>
                 </div>
             </div>
+
+            <!-- Drawer Footer -->
+            <div class="p-6 border-t border-neutral-100 bg-neutral-50/50">
+                <div class="flex items-center gap-3 mb-4">
+                    <div class="bg-primary-100 p-2 rounded-lg text-primary-600">
+                        <i data-lucide="phone" class="w-4 h-4"></i>
+                    </div>
+                    <div class="text-sm">
+                        <div class="text-neutral-400">Hỗ trợ 24/7</div>
+                        <div class="font-bold text-neutral-900">0123-456-789</div>
+                    </div>
+                </div>
+            </div>
         </div>
-    </header>
+    </div>
+
 
     <!-- Main Content Area -->
     <main id="main-content" class="min-h-[80vh]">
@@ -219,7 +275,7 @@ $isLoggedIn = isset($_SESSION['user_id']);
         // Scroll shadow for header
         window.addEventListener('scroll', () => {
             const header = document.querySelector('header');
-            if (window.scrollY > 10) {
+            if (window.scrollY > 8) {
                 header.classList.add('shadow-sm', 'border-neutral-200');
                 header.classList.remove('border-neutral-100');
             } else {
@@ -228,28 +284,62 @@ $isLoggedIn = isset($_SESSION['user_id']);
             }
         });
 
-        // Mobile Menu Logic
+        // Mobile Menu Logic (Drawer)
         function toggleMobileMenu() {
-            const menu = document.getElementById('mobile-menu');
-            const icon = document.getElementById('mobile-menu-icon');
-            const isHidden = menu.classList.contains('hidden');
+            const drawer = document.getElementById('mobile-drawer');
+            const overlay = document.getElementById('drawer-overlay');
+            const body = document.body;
             
-            if (isHidden) {
-                menu.classList.remove('hidden');
-                lucide.createIcons({
-                    name: 'x',
-                    attrs: { class: 'w-6 h-6' },
-                    element: icon
-                });
+            const isOpen = drawer.classList.contains('open');
+            
+            if (!isOpen) {
+                drawer.classList.add('open');
+                overlay.classList.add('open');
+                body.style.overflow = 'hidden';
             } else {
-                menu.classList.add('hidden');
-                lucide.createIcons({
-                    name: 'menu',
-                    attrs: { class: 'w-6 h-6' },
-                    element: icon
-                });
+                drawer.classList.remove('open');
+                overlay.classList.remove('open');
+                body.style.overflow = '';
             }
         }
+
+        // Cart Badge Logic
+        async function updateCartBadge() {
+            try {
+                const response = await fetch('<?php echo url('/cart/status'); ?>', {
+                    headers: { 'X-Requested-With': 'XMLHttpRequest' }
+                });
+                const data = await response.json();
+                
+                const badges = [
+                    document.getElementById('cart-badge-desktop'),
+                    document.getElementById('cart-badge-mobile')
+                ];
+                
+                badges.forEach(badge => {
+                    if (badge) {
+                        if (data.cartCount > 0) {
+                            badge.textContent = data.cartCount > 99 ? '99+' : data.cartCount;
+                            badge.classList.remove('hidden');
+                        } else {
+                            badge.classList.add('hidden');
+                        }
+                    }
+                });
+            } catch (err) {
+                console.error('Failed to update cart badge:', err);
+            }
+        }
+
+        // Initialize things on load
+        document.addEventListener('DOMContentLoaded', () => {
+            updateCartBadge();
+            // Lucide icons are already initialized via the script in <head> usually,
+            // but let's ensure it runs for dynamically changed content if needed.
+            if (window.lucide) {
+                lucide.createIcons();
+            }
+        });
 
         // Reservation Modal Logic
         const resModal = document.getElementById('reservation-modal');
