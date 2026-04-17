@@ -109,9 +109,9 @@ $isLoggedIn = isset($_SESSION['user_id']);
                         Đăng xuất
                     </a>
                 <?php else: ?>
-                    <button onclick="openReservationModal()" class="ml-3 px-6 py-2.5 rounded-xl bg-primary-500 text-sm font-bold text-white shadow-lg shadow-primary-500/25 hover:bg-primary-600 hover:shadow-primary-500/40 hover:-translate-y-0.5 transition-all active:translate-y-0 cursor-pointer">
+                    <a href="<?php echo url('/login'); ?>" class="ml-3 px-6 py-2.5 rounded-xl bg-primary-500 text-sm font-bold text-white shadow-lg shadow-primary-500/25 hover:bg-primary-600 hover:shadow-primary-500/40 hover:-translate-y-0.5 transition-all active:translate-y-0 flex items-center justify-center">
                         Bắt đầu
-                    </button>
+                    </a>
                 <?php endif; ?>
             </div>
 
@@ -162,9 +162,9 @@ $isLoggedIn = isset($_SESSION['user_id']);
                         <a href="<?php echo url('/login'); ?>" class="flex items-center gap-3 px-4 py-3 text-base font-medium text-neutral-700 hover:bg-neutral-50 rounded-xl">
                             <i data-lucide="log-in" class="w-5 h-5"></i> Đăng nhập
                         </a>
-                        <button onclick="openReservationModal(); toggleMobileMenu();" class="mt-4 w-full py-4 rounded-xl bg-primary-500 text-white font-bold shadow-lg shadow-primary-500/20 active:scale-[0.98] transition-all">
+                        <a href="<?php echo url('/login'); ?>" class="mt-4 w-full py-4 rounded-xl bg-primary-500 text-white font-bold shadow-lg shadow-primary-500/20 active:scale-[0.98] transition-all flex items-center justify-center">
                             Bắt đầu ngay
-                        </button>
+                        </a>
                     <?php endif; ?>
                 </div>
             </div>

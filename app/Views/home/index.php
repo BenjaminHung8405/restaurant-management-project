@@ -30,9 +30,15 @@
             </p>
 
             <div class="flex flex-col xs:flex-row items-center gap-4 mt-2">
-                <a href="<?php echo url('/menu'); ?>" class="w-full sm:w-auto px-8 py-4 rounded-xl bg-primary-500 text-white font-bold text-lg shadow-lg shadow-primary-500/20 hover:bg-primary-600 hover:-translate-y-1 transition-all">
-                    Khám phá thực đơn
-                </a>
+                <?php if (!isset($_SESSION['user_id'])): ?>
+                    <a href="<?php echo url('/login'); ?>" class="w-full sm:w-auto px-10 py-4 rounded-xl bg-primary-500 text-white font-bold text-lg shadow-lg shadow-primary-500/20 hover:bg-primary-600 hover:-translate-y-1 transition-all flex items-center justify-center">
+                        Bắt đầu
+                    </a>
+                <?php else: ?>
+                    <a href="<?php echo url('/menu'); ?>" class="w-full sm:w-auto px-8 py-4 rounded-xl bg-primary-500 text-white font-bold text-lg shadow-lg shadow-primary-500/20 hover:bg-primary-600 hover:-translate-y-1 transition-all flex items-center justify-center">
+                        Khám phá thực đơn
+                    </a>
+                <?php endif; ?>
                 <button onclick="openReservationModal()" class="w-full sm:w-auto px-8 py-4 rounded-xl border-2 border-primary-500 text-primary-600 font-bold text-lg hover:bg-orange-50 transition-all cursor-pointer">
                     Đặt bàn ngay
                 </button>
@@ -164,9 +170,15 @@
             </p>
 
             <div class="flex flex-col xs:flex-row items-center gap-3 pt-2">
-                <a href="<?php echo url('/menu'); ?>" class="px-8 py-4 rounded-xl bg-white text-primary-700 font-bold hover:bg-neutral-100 transition-all">
-                    Khám phá menu
-                </a>
+                <?php if (!isset($_SESSION['user_id'])): ?>
+                    <a href="<?php echo url('/login'); ?>" class="px-8 py-4 rounded-xl bg-white text-primary-700 font-bold hover:bg-neutral-100 transition-all">
+                        Bắt đầu ngay
+                    </a>
+                <?php else: ?>
+                    <a href="<?php echo url('/menu'); ?>" class="px-8 py-4 rounded-xl bg-white text-primary-700 font-bold hover:bg-neutral-100 transition-all">
+                        Khám phá menu
+                    </a>
+                <?php endif; ?>
                 <button onclick="openReservationModal()" class="px-8 py-4 rounded-xl border border-white/40 text-white font-bold hover:bg-white/10 transition-all cursor-pointer">
                     Đặt bàn ngay
                 </button>

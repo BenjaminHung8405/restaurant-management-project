@@ -2,6 +2,12 @@
 -- Compatible with Vertigo (MySQL)
 -- Drop existing tables if they exist (optional, for testing)
 
+-- Ensure the target database exists and is selected
+CREATE DATABASE IF NOT EXISTS restaurant_db
+  CHARACTER SET utf8mb4
+  COLLATE utf8mb4_unicode_ci;
+USE restaurant_db;
+
 SET FOREIGN_KEY_CHECKS = 0;
 DROP TABLE IF EXISTS order_items;
 DROP TABLE IF EXISTS orders;
@@ -81,7 +87,7 @@ COMMENT='Restaurant menu items with category relationship';
 -- ============================================================
 CREATE TABLE tables (
   id CHAR(36) NOT NULL COMMENT 'UUID primary key',
-  table_number INT NOT NULL UNIQUE COMMENT 'Physical table number',
+  table_number VARCHAR(50) NOT NULL UNIQUE COMMENT 'Physical table code/number (e.g., T1-01, VIP-02)',
   capacity INT NOT NULL COMMENT 'Seating capacity',
   status VARCHAR(50) NOT NULL DEFAULT 'available' COMMENT 'Status: available, occupied, reserved, etc.',
   created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT 'Record creation timestamp',

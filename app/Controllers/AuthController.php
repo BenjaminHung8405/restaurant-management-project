@@ -92,6 +92,7 @@ class AuthController extends BaseController
             'role' => (string) $user['role'],
             'email' => (string) $user['email'],
         );
+        $_SESSION['user_id'] = (string) $user['id'];
 
         $this->redirectByRole((string) $user['role']);
     }

@@ -7,6 +7,7 @@ use App\Controllers\ReservationController;
 use App\Controllers\AuthController;
 use App\Controllers\AdminOrderController;
 use App\Controllers\AdminMenuController;
+use App\Controllers\AdminDashboardController;
 use App\Core\Router;
 
 return function (Router $router) {
@@ -18,7 +19,8 @@ return function (Router $router) {
     $router->get('/logout', array(AuthController::class, 'logout'));
 
     // Admin Routes
-    $router->get('/admin', array(AdminOrderController::class, 'index'));
+    $router->get('/admin', array(AdminDashboardController::class, 'index'));
+    $router->get('/admin/dashboard', array(AdminDashboardController::class, 'index'));
     $router->get('/admin/orders', array(AdminOrderController::class, 'index'));
     $router->post('/admin/orders/update-status', array(AdminOrderController::class, 'updateStatus'));
     
@@ -29,6 +31,16 @@ return function (Router $router) {
     $router->post('/admin/menu/update', array(AdminMenuController::class, 'update'));
     $router->post('/admin/menu/delete', array(AdminMenuController::class, 'delete'));
     $router->get('/admin/menu/delete', array(AdminMenuController::class, 'delete')); // Fallback for simple link delete
+    
+    // Admin Categories
+    $router->get('/admin/categories', array(\App\Controllers\AdminCategoryController::class, 'index'));
+    $router->post('/admin/categories/store', array(\App\Controllers\AdminCategoryController::class, 'store'));
+    $router->post('/admin/categories/update', array(\App\Controllers\AdminCategoryController::class, 'update'));
+    $router->post('/admin/categories/delete', array(\App\Controllers\AdminCategoryController::class, 'destroy'));
+
+    // Admin Reservations
+    $router->get('/admin/reservations/create', array(\App\Controllers\AdminReservationController::class, 'create'));
+    $router->post('/admin/reservations/store', array(\App\Controllers\AdminReservationController::class, 'store'));
     
     // Meal Routes
     $router->get('/menu', array(MealController::class, 'index'));
