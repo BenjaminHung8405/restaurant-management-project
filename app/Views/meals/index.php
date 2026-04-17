@@ -102,17 +102,20 @@ if ($categoryId === '') {
 <!-- Sticky Category Filter -->
 <div class="sticky top-16 z-30 bg-white/95 backdrop-blur-md border-b border-neutral-100 shadow-sm transition-all duration-300">
     <div class="max-w-7xl mx-auto px-4 py-4">
-        <div class="flex items-center gap-3 overflow-x-auto pb-1 scrollbar-hide no-scrollbar">
+        <div class="flex items-center gap-3 overflow-x-auto pb-1 scrollbar-hide no-scrollbar category-nav-container">
             <a 
                 href="<?php echo url('/menu' . ($search ? '?search='.urlencode($search) : '')); ?>" 
-                class="px-6 py-2.5 rounded-full font-bold whitespace-nowrap transition-all <?php echo $categoryId === '' ? 'bg-primary-500 text-white shadow-lg shadow-primary-500/20 hover:bg-primary-600' : 'bg-neutral-100 text-neutral-600 hover:bg-neutral-200'; ?>"
+                class="category-nav-link px-6 py-2.5 rounded-full font-bold whitespace-nowrap transition-all <?php echo $categoryId === '' ? 'bg-primary-500 text-white shadow-lg shadow-primary-500/20 hover:bg-primary-600' : 'bg-neutral-100 text-neutral-600 hover:bg-neutral-200'; ?>"
+                data-category-id="all"
             >
                 Tất Cả
             </a>
             <?php foreach ($categories as $cat): ?>
                 <a 
-                    href="<?php echo url('/menu?category_id=' . $cat['id'] . ($search ? '&search='.urlencode($search) : '')); ?>" 
-                    class="px-6 py-2.5 rounded-full font-bold whitespace-nowrap transition-all <?php echo (string)$categoryId === (string)$cat['id'] ? 'bg-primary-500 text-white shadow-lg shadow-primary-500/20 hover:bg-primary-600' : 'bg-neutral-100 text-neutral-600 hover:bg-neutral-200'; ?>"
+                    href="<?php echo $categoryId === '' ? '#category-' . $cat['id'] : url('/menu?category_id=' . $cat['id'] . ($search ? '&search='.urlencode($search) : '')); ?>" 
+                    class="category-nav-link px-6 py-2.5 rounded-full font-bold whitespace-nowrap transition-all <?php echo (string)$categoryId === (string)$cat['id'] ? 'bg-primary-500 text-white shadow-lg shadow-primary-500/20 hover:bg-primary-600' : 'bg-neutral-100 text-neutral-600 hover:bg-neutral-200'; ?>"
+                    data-category-id="<?php echo $cat['id']; ?>"
+                    <?php if ($categoryId === ''): ?>onclick="scrollToCategory(event, 'category-<?php echo $cat['id']; ?>')"<?php endif; ?>
                 >
                     <?php echo htmlspecialchars($cat['name'], ENT_QUOTES, 'UTF-8'); ?>
                 </a>
@@ -196,17 +199,50 @@ if ($categoryId === '') {
     <!-- Main Menu Grid -->
     <section>
         <?php if ($categoryId === '' && !empty($groupedItems)): ?>
-            <!-- Grouped View -->
+            <!-- Grouped View with Horizontal Scroll -->
             <?php foreach ($groupedItems as $group): ?>
-                <div class="mb-16">
-                    <div class="flex items-center gap-4 mb-8">
-                        <h2 class="text-3xl font-display font-bold text-neutral-900 whitespace-nowrap"><?php echo htmlspecialchars($group['category']['name'], ENT_QUOTES, 'UTF-8'); ?></h2>
-                        <div class="h-px bg-neutral-100 flex-1"></div>
+                <div id="category-<?php echo $group['category']['id']; ?>" class="mb-20 category-section scroll-mt-32">
+                    <div class="flex items-center justify-between mb-8">
+                        <div class="flex items-center gap-4">
+                            <h2 class="text-3xl font-display font-bold text-neutral-900 whitespace-nowrap"><?php echo htmlspecialchars($group['category']['name'], ENT_QUOTES, 'UTF-8'); ?></h2>
+                            <div class="hidden sm:block h-px bg-neutral-100 w-24"></div>
+                            <a 
+                                href="<?php echo url('/menu?category_id=' . $group['category']['id']); ?>" 
+                                class="text-sm font-bold text-primary-500 hover:text-primary-600 transition-colors flex items-center gap-1 group/link"
+                            >
+                                Xem tất cả 
+                                <i data-lucide="chevron-right" class="w-4 h-4 group-hover/link:translate-x-1 transition-transform"></i>
+                            </a>
+                        </div>
+                        <div class="hidden md:flex gap-2">
+                            <button 
+                                onclick="scrollRow('row-<?php echo $group['category']['id']; ?>', -1)"
+                                class="p-3 rounded-full bg-white border border-neutral-200 text-neutral-400 hover:text-primary-500 hover:border-primary-500 transition-all shadow-sm active:scale-90"
+                            >
+                                <i data-lucide="chevron-left" class="w-5 h-5"></i>
+                            </button>
+                            <button 
+                                onclick="scrollRow('row-<?php echo $group['category']['id']; ?>', 1)"
+                                class="p-3 rounded-full bg-white border border-neutral-200 text-neutral-400 hover:text-primary-500 hover:border-primary-500 transition-all shadow-sm active:scale-90"
+                            >
+                                <i data-lucide="chevron-right" class="w-5 h-5"></i>
+                            </button>
+                        </div>
                     </div>
-                    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8">
+                    
+                    <div 
+                        id="row-<?php echo $group['category']['id']; ?>" 
+                        class="flex gap-8 overflow-x-auto pb-4 scroll-smooth no-scrollbar"
+                        style="scroll-snap-type: x mandatory;"
+                    >
                         <?php foreach ($group['items'] as $item): ?>
-                            <?php include 'meal_card.php'; ?>
+                            <div class="w-[280px] sm:w-[320px] lg:w-[350px] flex-shrink-0 scroll-snap-align-start px-1">
+                                <?php include 'meal_card.php'; ?>
+                            </div>
                         <?php endforeach; ?>
+                        
+                        <!-- Last spacer for desktop to ensure last card is fully visible with shadow -->
+                        <div class="w-[1px] flex-shrink-0"></div>
                     </div>
                 </div>
             <?php endforeach; ?>
@@ -268,12 +304,7 @@ if ($categoryId === '') {
     </div>
 </section>
 
-<!-- Floating Cart Bar Container -->
-<div id="floating-cart-container" class="transition-all duration-500">
-    <?php if ($cartCount > 0): ?>
-        <?php include 'floating_cart_bar.php'; ?>
-    <?php endif; ?>
-</div>
+
 
 <!-- Popup Đặt Món -->
 <div id="meal-modal" class="fixed inset-0 z-[100] hidden items-center justify-center">
@@ -382,54 +413,72 @@ if ($categoryId === '') {
     let currentQty = 1;
 
     function openMealModal(btn) {
-        const item = JSON.parse(btn.getAttribute('data-item'));
-        currentItem = item;
-        currentQty = 1;
+        try {
+            const item = JSON.parse(btn.getAttribute('data-item'));
+            currentItem = item;
+            currentQty = 1;
 
-        // Populate fields
-        document.getElementById('modal-name').textContent = item.name;
-        document.getElementById('modal-price').textContent = formatNumber(item.price);
-        document.getElementById('modal-description').textContent = item.description;
-        document.getElementById('modal-qty').textContent = currentQty;
-        document.getElementById('modal-notes').value = '';
-        document.getElementById('modal-category').textContent = item.category_name;
-        
-        const img = document.getElementById('modal-image');
-        const imgContainer = document.getElementById('modal-image-container');
-        if (item.image_url) {
-            img.src = item.image_url;
-            imgContainer.classList.remove('hidden');
-        } else {
-            imgContainer.classList.add('hidden');
-        }
+            // Populate fields
+            const nameEl = document.getElementById('modal-name');
+            const priceEl = document.getElementById('modal-price');
+            const descEl = document.getElementById('modal-description');
+            const qtyEl = document.getElementById('modal-qty');
+            const categoryEl = document.getElementById('modal-category');
+            const notesEl = document.getElementById('modal-notes');
 
-        updateModalSubtotal();
-
-        // Show modal
-        const modal = document.getElementById('meal-modal');
-        const backdrop = modal.querySelector('.modal-backdrop');
-        const content = modal.querySelector('.modal-content');
-
-        modal.classList.remove('hidden');
-        modal.classList.add('flex'); // Ensure it's flex for centering
-        
-        content.classList.remove('scale-95', 'opacity-0');
-        content.classList.add('scale-100', 'opacity-100');
-        content.classList.remove('pointer-events-none');
-        content.classList.add('pointer-events-auto');
-
-        setTimeout(() => {
-            backdrop.classList.remove('opacity-0');
-            backdrop.classList.add('opacity-100');
-            backdrop.classList.remove('pointer-events-none');
-            backdrop.classList.add('pointer-events-auto');
+            if (nameEl) nameEl.textContent = item.name;
+            if (priceEl) priceEl.textContent = formatNumber(item.price);
+            if (descEl) descEl.textContent = item.description;
+            if (qtyEl) qtyEl.textContent = currentQty;
+            if (notesEl) notesEl.value = '';
+            if (categoryEl) categoryEl.textContent = item.category_name;
             
-        }, 50);
+            const img = document.getElementById('modal-image');
+            const imgContainer = document.getElementById('modal-image-container');
+            if (img && imgContainer) {
+                if (item.image_url) {
+                    img.src = item.image_url;
+                    imgContainer.classList.remove('hidden');
+                } else {
+                    imgContainer.classList.add('hidden');
+                }
+            }
 
-        document.body.style.overflow = 'hidden';
-        
-        // Refresh Lucide icons in modal
-        if (typeof lucide !== 'undefined') lucide.createIcons();
+            updateModalSubtotal();
+
+            // Show modal
+            const modal = document.getElementById('meal-modal');
+            if (!modal) return;
+
+            const backdrop = modal.querySelector('.modal-backdrop');
+            const content = modal.querySelector('.modal-content');
+
+            modal.classList.remove('hidden');
+            modal.classList.add('flex'); // Ensure it's flex for centering
+            
+            if (content) {
+                content.classList.remove('scale-95', 'opacity-0');
+                content.classList.add('scale-100', 'opacity-100');
+                content.classList.remove('pointer-events-none');
+                content.classList.add('pointer-events-auto');
+            }
+
+            if (backdrop) {
+                setTimeout(() => {
+                    backdrop.classList.remove('opacity-0');
+                    backdrop.classList.add('opacity-100');
+                    backdrop.classList.remove('pointer-events-none');
+                    backdrop.classList.add('pointer-events-auto');
+                }, 50);
+            }
+
+            document.body.style.overflow = 'hidden';
+            
+            // Refresh Lucide icons in modal
+            if (typeof lucide !== 'undefined') lucide.createIcons();
+        } catch (err) {
+            console.error('Error opening meal modal:', err);
+        }
     }
 
     function closeMealModal() {
@@ -494,7 +543,9 @@ if ($categoryId === '') {
             if (response.ok) {
                 const data = await response.json();
                 if (data.success) {
-                    updateFloatingCart(data);
+                    if (typeof updateCartUI === 'function') {
+                        updateCartUI();
+                    }
                     closeMealModal();
                     // Optional: Show a small toast notification
                 }
@@ -508,21 +559,7 @@ if ($categoryId === '') {
         }
     }
 
-    async function updateFloatingCart(data) {
-        const container = document.getElementById('floating-cart-container');
-        
-        try {
-            // Re-fetch the floating bar partial via AJAX to ensure consistency
-            const resp = await fetch('<?php echo url("/cart/status_bar"); ?>');
-            if (resp.ok) {
-                const html = await resp.text();
-                container.innerHTML = html;
-                if (typeof lucide !== 'undefined') lucide.createIcons();
-            }
-        } catch (error) {
-            console.error('Failed to update cart bar:', error);
-        }
-    }
+
 
     document.addEventListener('DOMContentLoaded', () => {
         // Move modal outside of any transform containers (like .animate-fade-in) 
@@ -544,6 +581,78 @@ if ($categoryId === '') {
                 scrollContainer.scrollBy({ left: -350, behavior: 'smooth' });
             });
         }
+
+        // Initialize ScrollSpy for category navigation
+        const sections = document.querySelectorAll('.category-section');
+        const navLinks = document.querySelectorAll('.category-nav-link');
+        
+        if (sections.length > 0) {
+            window.addEventListener('scroll', () => {
+                let current = '';
+                sections.forEach(section => {
+                    const sectionTop = section.offsetTop;
+                    const sectionHeight = section.clientHeight;
+                    // Adjust with offset of sticky header (16 + 4.5rem approximate)
+                    if (pageYOffset >= (sectionTop - 150)) {
+                        current = section.getAttribute('id').replace('category-', '');
+                    }
+                });
+
+                navLinks.forEach(link => {
+                    link.classList.remove('bg-primary-500', 'text-white', 'shadow-lg', 'shadow-primary-500/20');
+                    link.classList.add('bg-neutral-100', 'text-neutral-600');
+                    if (link.getAttribute('data-category-id') === current) {
+                        link.classList.add('bg-primary-500', 'text-white', 'shadow-lg', 'shadow-primary-500/20');
+                        link.classList.remove('bg-neutral-100', 'text-neutral-600');
+                        
+                        // Auto-scroll the nav container to keep active link visible
+                        const navContainer = document.querySelector('.category-nav-container');
+                        if (navContainer) {
+                            const linkOffsetLeft = link.offsetLeft;
+                            const containerHalfWidth = navContainer.clientWidth / 2;
+                            navContainer.scrollTo({
+                                left: linkOffsetLeft - containerHalfWidth + (link.clientWidth / 2),
+                                behavior: 'smooth'
+                            });
+                        }
+                    } else if (current === '' && link.getAttribute('data-category-id') === 'all') {
+                        link.classList.add('bg-primary-500', 'text-white', 'shadow-lg', 'shadow-primary-500/20');
+                        link.classList.remove('bg-neutral-100', 'text-neutral-600');
+                    }
+                });
+            });
+        }
+    });
+
+    function scrollRow(rowId, direction) {
+        const container = document.getElementById(rowId);
+        if (!container) return;
+        const scrollAmount = container.clientWidth * 0.8;
+        container.scrollBy({
+            left: scrollAmount * direction,
+            behavior: 'smooth'
+        });
+    }
+
+    function scrollToCategory(event, elementId) {
+        event.preventDefault();
+        const element = document.getElementById(elementId);
+        if (element) {
+            const offset = 140; // Height of combined headers
+            const bodyRect = document.body.getBoundingClientRect().top;
+            const elementRect = element.getBoundingClientRect().top;
+            const elementPosition = elementRect - bodyRect;
+            const offsetPosition = elementPosition - offset;
+
+            window.scrollTo({
+                top: offsetPosition,
+                behavior: 'smooth'
+            });
+            
+            // Update URL hash without jumping
+            history.pushState(null, null, '#' + elementId);
+        }
+    }
         
         // Handle ESC key to close modal
         document.addEventListener('keydown', (e) => {
@@ -552,5 +661,4 @@ if ($categoryId === '') {
                 closeMealModal();
             }
         });
-    });
 </script>
