@@ -9,6 +9,10 @@ use Throwable;
 
 class CartController extends BaseController
 {
+    private $maxCartItemQuantity = 50;
+    private $maxItemNoteLength = 500;
+    private $flashErrorSessionKey = 'cart_flash_error';
+
     public function __construct()
     {
         if (session_status() === PHP_SESSION_NONE) {
@@ -53,49 +57,70 @@ class CartController extends BaseController
     public function setTable()
     {
         $tableId = isset($_GET['table_id']) ? trim((string) $_GET['table_id']) : '';
-        
-        if ($tableId !== '') {
-            $_SESSION['table_id'] = $tableId;
-            return $this->json(array('success' => true, 'table_id' => $tableId));
+
+        if ($tableId === '' || !$this->isValidUuid($tableId)) {
+            return $this->json(array('success' => false, 'message' => 'Mã bàn không hợp lệ.'));
         }
-        
-        return $this->json(array('success' => false, 'message' => 'Invalid table ID'));
+
+        $tableModel = new Table();
+        $table = $tableModel->find($tableId);
+
+        if (!$table || ($table['status'] ?? '') !== 'available') {
+            return $this->json(array('success' => false, 'message' => 'Bàn được chọn hiện không khả dụng.'));
+        }
+
+        $_SESSION['table_id'] = $tableId;
+        return $this->json(array('success' => true, 'table_id' => $tableId));
     }
 
     public function add()
     {
         // Support both POST (new modal) and GET (legacy/simple add)
         $mealId = isset($_REQUEST['id']) ? trim((string) $_REQUEST['id']) : '';
-        $quantity = isset($_REQUEST['quantity']) ? (int) $_REQUEST['quantity'] : 1;
+        $quantity = $this->parseIntInRange($_REQUEST['quantity'] ?? 1, 1, $this->maxCartItemQuantity);
         $notes = isset($_REQUEST['notes']) ? trim((string) $_REQUEST['notes']) : '';
 
-        if ($mealId !== '') {
-            $mealModel = new Meal();
-            if ($mealModel->find($mealId)) {
-                if (!isset($_SESSION['cart'])) {
-                    $_SESSION['cart'] = array();
-                }
-                
-                // Find if identical item (meal_id + notes) exists
-                $foundIndex = -1;
-                foreach ($_SESSION['cart'] as $index => $cartItem) {
-                    if ($cartItem['meal_id'] === $mealId && $cartItem['notes'] === $notes) {
-                        $foundIndex = $index;
-                        break;
-                    }
-                }
+        if ($mealId === '' || !$this->isValidUuid($mealId)) {
+            return $this->handleInvalidCartRequest('Mã món ăn không hợp lệ.');
+        }
 
-                if ($foundIndex !== -1) {
-                    $_SESSION['cart'][$foundIndex]['quantity'] += $quantity;
-                } else {
-                    $_SESSION['cart'][] = array(
-                        'cart_item_id' => uniqid('ci_'),
-                        'meal_id' => $mealId,
-                        'quantity' => $quantity,
-                        'notes' => $notes
-                    );
-                }
+        if ($quantity === false) {
+            return $this->handleInvalidCartRequest('Số lượng món phải từ 1 đến 50.');
+        }
+
+        if (mb_strlen($notes) > $this->maxItemNoteLength) {
+            return $this->handleInvalidCartRequest('Ghi chú món ăn không được vượt quá 500 ký tự.');
+        }
+
+        $mealModel = new Meal();
+        $meal = $mealModel->find($mealId);
+        if (!$meal || (int) ($meal['is_available'] ?? 0) !== 1) {
+            return $this->handleInvalidCartRequest('Món ăn không tồn tại hoặc đã ngưng phục vụ.');
+        }
+
+        if (!isset($_SESSION['cart'])) {
+            $_SESSION['cart'] = array();
+        }
+        
+        // Find if identical item (meal_id + notes) exists
+        $foundIndex = -1;
+        foreach ($_SESSION['cart'] as $index => $cartItem) {
+            if ($cartItem['meal_id'] === $mealId && $cartItem['notes'] === $notes) {
+                $foundIndex = $index;
+                break;
             }
+        }
+
+        if ($foundIndex !== -1) {
+            $updatedQuantity = (int) $_SESSION['cart'][$foundIndex]['quantity'] + $quantity;
+            $_SESSION['cart'][$foundIndex]['quantity'] = min($updatedQuantity, $this->maxCartItemQuantity);
+        } else {
+            $_SESSION['cart'][] = array(
+                'cart_item_id' => uniqid('ci_'),
+                'meal_id' => $mealId,
+                'quantity' => $quantity,
+                'notes' => $notes
+            );
         }
 
         // Return JSON for AJAX, otherwise redirect back
@@ -176,7 +201,11 @@ class CartController extends BaseController
     public function update()
     {
         $cartItemId = isset($_GET['cart_item_id']) ? trim((string) $_GET['cart_item_id']) : '';
-        $quantity = isset($_GET['quantity']) ? (int) $_GET['quantity'] : 1;
+        $quantity = $this->parseIntInRange($_GET['quantity'] ?? null, 0, $this->maxCartItemQuantity);
+
+        if ($quantity === false) {
+            return $this->handleInvalidCartRequest('Số lượng món phải từ 0 đến 50.');
+        }
 
         if ($cartItemId !== '' && isset($_SESSION['cart'])) {
             foreach ($_SESSION['cart'] as $index => $cartItem) {
@@ -209,24 +238,40 @@ class CartController extends BaseController
         $cart = isset($_SESSION['cart']) && is_array($_SESSION['cart']) ? $_SESSION['cart'] : array();
         
         if (empty($cart)) {
-            header('Location: /menu');
+            $this->setCartFlashError('Giỏ hàng đang trống, không thể đặt món.');
+            header('Location: ' . url('/menu'));
             exit;
         }
 
+        $tableModel = new Table();
+
         // Simulate Table ID (usually from QR scan)
         // For demo, we check session or default to a demo table
-        $tableId = isset($_SESSION['table_id']) ? $_SESSION['table_id'] : null;
+        $tableId = isset($_SESSION['table_id']) ? trim((string) $_SESSION['table_id']) : null;
+
+        if ($tableId !== null && $tableId !== '') {
+            if (!$this->isValidUuid($tableId)) {
+                $tableId = null;
+                unset($_SESSION['table_id']);
+            } else {
+                $table = $tableModel->find($tableId);
+                if (!$table || ($table['status'] ?? '') !== 'available') {
+                    $tableId = null;
+                    unset($_SESSION['table_id']);
+                }
+            }
+        }
 
         if (!$tableId) {
             // Check if there are any tables available
-            $tableModel = new Table();
             $tables = $tableModel->getAllAvailable();
             if (!empty($tables)) {
                 $tableId = $tables[0]['id']; // Assign first available table for demo
                 $_SESSION['table_id'] = $tableId;
             } else {
                 // Fallback or error
-                header('Location: /cart?error=no_table_available');
+                $this->setCartFlashError('Hiện không có bàn trống để tiếp nhận đơn hàng.');
+                header('Location: ' . url('/cart'));
                 exit;
             }
         }
@@ -238,14 +283,28 @@ class CartController extends BaseController
         $grandTotal = 0;
         
         foreach ($cart as $cartItem) {
-            $item = $mealModel->find($cartItem['meal_id']);
-            if ($item) {
-                $item['quantity'] = $cartItem['quantity'];
-                $item['notes'] = $cartItem['notes'];
-                $item['subtotal'] = $item['price'] * $cartItem['quantity'];
+            $mealId = trim((string) ($cartItem['meal_id'] ?? ''));
+            $quantity = $this->parseIntInRange($cartItem['quantity'] ?? null, 1, $this->maxCartItemQuantity);
+            $notes = trim((string) ($cartItem['notes'] ?? ''));
+
+            if (!$this->isValidUuid($mealId) || $quantity === false || mb_strlen($notes) > $this->maxItemNoteLength) {
+                continue;
+            }
+
+            $item = $mealModel->find($mealId);
+            if ($item && (int) ($item['is_available'] ?? 0) === 1) {
+                $item['quantity'] = $quantity;
+                $item['notes'] = ($notes === '') ? null : $notes;
+                $item['subtotal'] = $item['price'] * $quantity;
                 $cartItems[] = $item;
                 $grandTotal += $item['subtotal'];
             }
+        }
+
+        if (empty($cartItems) || $grandTotal <= 0) {
+            $this->setCartFlashError('Giỏ hàng có dữ liệu không hợp lệ. Vui lòng kiểm tra lại trước khi đặt món.');
+            header('Location: ' . url('/cart'));
+            exit;
         }
 
         try {
@@ -271,9 +330,26 @@ class CartController extends BaseController
             ));
         } catch (Throwable $e) {
             error_log('Order error: ' . $e->getMessage());
-            header('Location: /cart?error=order_failed');
+            $this->setCartFlashError('Không thể tạo đơn hàng lúc này. Vui lòng thử lại sau.');
+            header('Location: ' . url('/cart'));
             exit;
         }
+    }
+
+    private function handleInvalidCartRequest($message)
+    {
+        if ($this->isAjax()) {
+            return $this->json(array('success' => false, 'message' => $message));
+        }
+
+        $this->setCartFlashError($message);
+
+        $this->redirectBack();
+    }
+
+    private function setCartFlashError($message)
+    {
+        $_SESSION[$this->flashErrorSessionKey] = trim((string) $message);
     }
 
     private function uuid()

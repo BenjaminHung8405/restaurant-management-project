@@ -15,11 +15,24 @@ class AdminMenuController extends AdminBaseController
     public function index()
     {
         $mealModel = new Meal();
-        $items = $mealModel->all();
+        $categoryModel = new Category();
+        
+        $search = trim((string)($_GET['search'] ?? ''));
+        $categoryId = trim((string)($_GET['category_id'] ?? ''));
+        $status = trim((string)($_GET['status'] ?? ''));
+
+        $items = $mealModel->all($search, $categoryId, $status);
+        $categories = $categoryModel->all();
 
         $this->render('admin/menu/index', array(
             'title' => 'Quản lý thực đơn',
             'items' => $items,
+            'categories' => $categories,
+            'filters' => array(
+                'search' => $search,
+                'category_id' => $categoryId,
+                'status' => $status
+            ),
             'flashSuccess' => $_SESSION['admin_menu_success'] ?? '',
             'flashError' => $_SESSION['admin_menu_error'] ?? ''
         ), 'layouts/admin');
@@ -45,19 +58,22 @@ class AdminMenuController extends AdminBaseController
         $errors = $this->validate($data);
 
         $imageUrl = $this->handleUpload($errors);
-        if ($imageUrl) {
-            $data['image_url'] = $imageUrl;
-        }
-
+        
         if (empty($errors)) {
+            $data['image_url'] = $imageUrl; // Will be null if no upload, which is fine if DB allows
             $mealModel = new Meal();
             $data['id'] = $this->uuid();
-            if ($mealModel->create($data)) {
-                $_SESSION['admin_menu_success'] = 'Thêm món ăn thành công.';
-                header('Location: ' . url('/admin/menu'));
-                exit;
+            
+            try {
+                if ($mealModel->create($data)) {
+                    $_SESSION['admin_menu_success'] = 'Thêm món ăn thành công.';
+                    header('Location: ' . url('/admin/menu'));
+                    exit;
+                }
+                $errors[] = 'Không thể lưu món ăn vào cơ sở dữ liệu.';
+            } catch (Throwable $e) {
+                $errors[] = 'Lỗi cơ sở dữ liệu: ' . $e->getMessage();
             }
-            $errors[] = 'Không thể lưu món ăn vào cơ sở dữ liệu.';
         }
 
         $categoryModel = new Category();
@@ -72,7 +88,13 @@ class AdminMenuController extends AdminBaseController
 
     public function edit()
     {
-        $id = $_GET['id'] ?? '';
+        $id = trim((string) ($_GET['id'] ?? ''));
+        if (!$this->isValidUuid($id)) {
+            $_SESSION['admin_menu_error'] = 'Mã món ăn không hợp lệ.';
+            header('Location: ' . url('/admin/menu'));
+            exit;
+        }
+
         $mealModel = new Meal();
         $item = $mealModel->find($id);
 
@@ -93,7 +115,13 @@ class AdminMenuController extends AdminBaseController
 
     public function update()
     {
-        $id = $_POST['id'] ?? '';
+        $id = trim((string) ($_POST['id'] ?? ''));
+        if (!$this->isValidUuid($id)) {
+            $_SESSION['admin_menu_error'] = 'Mã món ăn không hợp lệ.';
+            header('Location: ' . url('/admin/menu'));
+            exit;
+        }
+
         $mealModel = new Meal();
         $item = $mealModel->find($id);
 
@@ -108,25 +136,28 @@ class AdminMenuController extends AdminBaseController
 
         $imageUrl = $this->handleUpload($errors);
         if ($imageUrl) {
-            // Delete old image if exists
             $this->deleteImage($item['image_url']);
             $data['image_url'] = $imageUrl;
         }
 
         if (empty($errors)) {
-            if ($mealModel->update($id, $data)) {
-                $_SESSION['admin_menu_success'] = 'Cập nhật món ăn thành công.';
-                header('Location: ' . url('/admin/menu'));
-                exit;
+            try {
+                if ($mealModel->update($id, $data)) {
+                    $_SESSION['admin_menu_success'] = 'Cập nhật món ăn thành công.';
+                    header('Location: ' . url('/admin/menu'));
+                    exit;
+                }
+                $errors[] = 'Không thể cập nhật món ăn.';
+            } catch (Throwable $e) {
+                $errors[] = 'Lỗi cơ sở dữ liệu: ' . $e->getMessage();
             }
-            $errors[] = 'Không thể cập nhật món ăn.';
         }
 
         $categoryModel = new Category();
         $this->render('admin/menu/form', array(
             'title' => 'Chỉnh sửa món ăn',
             'categories' => $categoryModel->all(),
-            'item' => (object)MargeArray($item, $data),
+            'item' => (object)$this->mergeArray($item, $data),
             'isEdit' => true,
             'errors' => $errors
         ), 'layouts/admin');
@@ -134,7 +165,13 @@ class AdminMenuController extends AdminBaseController
 
     public function delete()
     {
-        $id = $_POST['id'] ?? $_GET['id'] ?? '';
+        $id = trim((string) ($_POST['id'] ?? $_GET['id'] ?? ''));
+        if (!$this->isValidUuid($id)) {
+            $_SESSION['admin_menu_error'] = 'Mã món ăn không hợp lệ.';
+            header('Location: ' . url('/admin/menu'));
+            exit;
+        }
+
         $mealModel = new Meal();
         $item = $mealModel->find($id);
 
@@ -153,7 +190,7 @@ class AdminMenuController extends AdminBaseController
         return array(
             'name' => trim((string)($_POST['name'] ?? '')),
             'category_id' => trim((string)($_POST['category_id'] ?? '')),
-            'price' => (float)($_POST['price'] ?? 0),
+            'price' => trim((string)($_POST['price'] ?? '')),
             'description' => trim((string)($_POST['description'] ?? '')),
             'area' => trim((string)($_POST['area'] ?? '')),
             'is_available' => isset($_POST['is_available']) ? 1 : 0,
@@ -161,13 +198,47 @@ class AdminMenuController extends AdminBaseController
         );
     }
 
-    private function validate($data)
+    private function validate(&$data)
     {
         $errors = array();
-        if ($data['name'] === '') $errors[] = 'Tên món ăn không được để trống.';
-        if ($data['category_id'] === '') $errors[] = 'Vui lòng chọn danh mục.';
-        if ($data['price'] <= 0) $errors[] = 'Giá món phải lớn hơn 0.';
-        if (strlen($data['area']) > 100) $errors[] = 'Khu vực không được vượt quá 100 ký tự.';
+        
+        // Name validation
+        if ($data['name'] === '') {
+            $errors[] = 'Tên món ăn không được để trống.';
+        } elseif (mb_strlen($data['name']) > 255) {
+            $errors[] = 'Tên món ăn không được vượt quá 255 ký tự.';
+        }
+
+        // Category validation
+        if ($data['category_id'] === '') {
+            $errors[] = 'Vui lòng chọn danh mục thực đơn.';
+        } elseif (!$this->isValidUuid($data['category_id'])) {
+            $errors[] = 'Danh mục được chọn không hợp lệ.';
+        } else {
+            $categoryModel = new Category();
+            if (!$categoryModel->find($data['category_id'])) {
+                $errors[] = 'Danh mục được chọn không tồn tại.';
+            }
+        }
+
+        // Price validation
+        $price = $this->parsePrice($data['price']);
+        if ($price === false) {
+            $errors[] = 'Giá món ăn phải là một con số.';
+        } else {
+            $data['price'] = $price;
+        }
+
+        // Area validation
+        if (mb_strlen($data['area']) > 100) {
+            $errors[] = 'Khu vực/phong cách không được vượt quá 100 ký tự.';
+        }
+
+        // Description validation
+        if (mb_strlen($data['description']) > 2000) {
+            $errors[] = 'Mô tả không được vượt quá 2000 ký tự.';
+        }
+
         return $errors;
     }
 
@@ -188,12 +259,15 @@ class AdminMenuController extends AdminBaseController
             return null;
         }
 
-        $allowedTypes = array('image/jpeg', 'image/png', 'image/webp', 'image/gif');
-        $finfo = finfo_open(FILEINFO_MIME_TYPE);
-        $mimeType = finfo_file($finfo, $file['tmp_name']);
-        finfo_close($finfo);
+        $allowedTypes = array(
+            'image/jpeg' => 'jpg',
+            'image/png' => 'png',
+            'image/webp' => 'webp',
+            'image/gif' => 'gif'
+        );
+        $mimeType = $this->detectMimeType($file['tmp_name']);
 
-        if (!in_array($mimeType, $allowedTypes)) {
+        if ($mimeType === null || !isset($allowedTypes[$mimeType])) {
             $errors[] = 'Chỉ chấp nhận định dạng JPG, PNG, WEBP hoặc GIF.';
             return null;
         }
@@ -202,7 +276,7 @@ class AdminMenuController extends AdminBaseController
             mkdir($this->uploadDir, 0775, true);
         }
 
-        $extension = pathinfo($file['name'], PATHINFO_EXTENSION);
+        $extension = $allowedTypes[$mimeType];
         $fileName = 'menu-' . date('YmdHis') . '-' . bin2hex(random_bytes(4)) . '.' . $extension;
         $dest = $this->uploadDir . '/' . $fileName;
 
@@ -211,6 +285,36 @@ class AdminMenuController extends AdminBaseController
         }
 
         $errors[] = 'Không thể lưu tệp ảnh.';
+        return null;
+    }
+
+    private function detectMimeType($tmpPath)
+    {
+        if (function_exists('finfo_open') && function_exists('finfo_file')) {
+            $finfo = @finfo_open(FILEINFO_MIME_TYPE);
+            if ($finfo !== false) {
+                $mimeType = @finfo_file($finfo, $tmpPath);
+                finfo_close($finfo);
+                if (is_string($mimeType) && $mimeType !== '') {
+                    return strtolower($mimeType);
+                }
+            }
+        }
+
+        if (function_exists('getimagesize')) {
+            $imageInfo = @getimagesize($tmpPath);
+            if (is_array($imageInfo) && !empty($imageInfo['mime'])) {
+                return strtolower($imageInfo['mime']);
+            }
+        }
+
+        if (function_exists('mime_content_type')) {
+            $mimeType = @mime_content_type($tmpPath);
+            if (is_string($mimeType) && $mimeType !== '') {
+                return strtolower($mimeType);
+            }
+        }
+
         return null;
     }
 
@@ -230,11 +334,10 @@ class AdminMenuController extends AdminBaseController
         $data[8] = chr((ord($data[8]) & 0x3f) | 0x80);
         return vsprintf('%s%s-%s-%s-%s-%s%s%s', str_split(bin2hex($data), 4));
     }
-}
-
-function MargeArray($old, $new) {
-    foreach($new as $k => $v) {
-        $old[$k] = $v;
+    private function mergeArray($old, $new) {
+        foreach($new as $k => $v) {
+            $old[$k] = $v;
+        }
+        return $old;
     }
-    return $old;
 }

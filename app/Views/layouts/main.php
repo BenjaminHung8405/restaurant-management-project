@@ -1,6 +1,14 @@
 <?php
+if (session_status() === PHP_SESSION_NONE) {
+    session_start();
+}
+
 $pageTitle = isset($title) ? $title : 'RestoMS';
 $isLoggedIn = isset($_SESSION['user_id']);
+$cartFlashError = isset($_SESSION['cart_flash_error']) ? trim((string) $_SESSION['cart_flash_error']) : '';
+if ($cartFlashError !== '') {
+    unset($_SESSION['cart_flash_error']);
+}
 ?>
 <!DOCTYPE html>
 <html lang="vi" class="scroll-smooth overflow-x-hidden">
@@ -187,6 +195,17 @@ $isLoggedIn = isset($_SESSION['user_id']);
 
     <!-- Main Content Area -->
     <main id="main-content" class="min-h-[80vh]">
+        <?php if ($cartFlashError !== ''): ?>
+            <section class="max-w-7xl mx-auto px-4 sm:px-8 pt-6">
+                <div class="rounded-2xl border border-red-100 bg-red-50 px-4 py-3 text-red-700 shadow-sm">
+                    <div class="flex items-start gap-2.5">
+                        <i data-lucide="alert-circle" class="w-5 h-5 mt-0.5 flex-shrink-0"></i>
+                        <p class="text-sm font-semibold leading-relaxed"><?php echo htmlspecialchars($cartFlashError, ENT_QUOTES, 'UTF-8'); ?></p>
+                    </div>
+                </div>
+            </section>
+        <?php endif; ?>
+
         <div class="animate-fade-in">
             <?php echo $content; ?>
         </div>

@@ -124,12 +124,40 @@ if (!function_exists('handleImageUpload')) {
         }
 
         // 3. Validate file type (Images only)
-        $allowedTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
-        $fileInfo = finfo_open(FILEINFO_MIME_TYPE);
-        $mimeType = finfo_file($fileInfo, $file['tmp_name']);
-        finfo_close($fileInfo);
+        $allowedTypes = [
+            'image/jpeg' => 'jpg',
+            'image/png' => 'png',
+            'image/gif' => 'gif',
+            'image/webp' => 'webp',
+        ];
 
-        if (!in_array($mimeType, $allowedTypes)) {
+        $mimeType = null;
+        if (function_exists('finfo_open') && function_exists('finfo_file')) {
+            $fileInfo = @finfo_open(FILEINFO_MIME_TYPE);
+            if ($fileInfo !== false) {
+                $detectedMime = @finfo_file($fileInfo, $file['tmp_name']);
+                finfo_close($fileInfo);
+                if (is_string($detectedMime) && $detectedMime !== '') {
+                    $mimeType = strtolower($detectedMime);
+                }
+            }
+        }
+
+        if ($mimeType === null && function_exists('getimagesize')) {
+            $imageInfo = @getimagesize($file['tmp_name']);
+            if (is_array($imageInfo) && !empty($imageInfo['mime'])) {
+                $mimeType = strtolower($imageInfo['mime']);
+            }
+        }
+
+        if ($mimeType === null && function_exists('mime_content_type')) {
+            $detectedMime = @mime_content_type($file['tmp_name']);
+            if (is_string($detectedMime) && $detectedMime !== '') {
+                $mimeType = strtolower($detectedMime);
+            }
+        }
+
+        if ($mimeType === null || !isset($allowedTypes[$mimeType])) {
             return false;
         }
 
@@ -140,12 +168,7 @@ if (!function_exists('handleImageUpload')) {
         }
 
         // 5. Generate unique filename to avoid conflicts
-        $extension = pathinfo($file['name'], PATHINFO_EXTENSION);
-        // Sanitize original extension just in case
-        $extension = strtolower(preg_replace('/[^a-zA-Z0-0]/', '', $extension));
-        if (empty($extension)) {
-             $extension = 'jpg'; // Fallback
-        }
+           $extension = $allowedTypes[$mimeType];
         
         $newFilename = uniqid('meal_', true) . '.' . $extension;
         $targetPath = rtrim($absoluteTargetDir, '/') . '/' . $newFilename;

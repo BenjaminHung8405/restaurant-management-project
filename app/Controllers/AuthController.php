@@ -47,6 +47,33 @@ class AuthController extends BaseController
             return;
         }
 
+        if (mb_strlen($identity) > 255) {
+            $this->render('auth/login', array(
+                'title' => 'Đăng nhập',
+                'identity' => '',
+                'errorMessage' => 'Định danh đăng nhập không hợp lệ.'
+            ));
+            return;
+        }
+
+        if (mb_strlen($password) > 255) {
+            $this->render('auth/login', array(
+                'title' => 'Đăng nhập',
+                'identity' => $identity,
+                'errorMessage' => 'Mật khẩu không hợp lệ.'
+            ));
+            return;
+        }
+
+        if (strpos($identity, '@') !== false && !filter_var($identity, FILTER_VALIDATE_EMAIL)) {
+            $this->render('auth/login', array(
+                'title' => 'Đăng nhập',
+                'identity' => $identity,
+                'errorMessage' => 'Email đăng nhập không đúng định dạng.'
+            ));
+            return;
+        }
+
         $userModel = new User();
         $user = $userModel->findByIdentity($identity);
 

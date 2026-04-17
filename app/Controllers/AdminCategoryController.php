@@ -50,15 +50,15 @@ class AdminCategoryController extends AdminBaseController
 
     public function update()
     {
-        $id = $_POST['id'] ?? '';
-        if (empty($id)) {
+        $id = trim((string) ($_POST['id'] ?? ''));
+        if (!$this->isValidUuid($id)) {
             $_SESSION['category_error'] = 'ID không hợp lệ.';
             header('Location: ' . url('/admin/categories'));
             exit;
         }
 
         $data = $this->getFormData();
-        $errors = $this->validate($data);
+        $errors = $this->validate($data, $id);
 
         if (empty($errors)) {
             try {
@@ -81,9 +81,9 @@ class AdminCategoryController extends AdminBaseController
 
     public function destroy()
     {
-        $id = $_POST['id'] ?? '';
+        $id = trim((string) ($_POST['id'] ?? ''));
         
-        if (empty($id)) {
+        if (!$this->isValidUuid($id)) {
             $_SESSION['category_error'] = 'ID không hợp lệ.';
             header('Location: ' . url('/admin/categories'));
             exit;
@@ -118,12 +118,35 @@ class AdminCategoryController extends AdminBaseController
         );
     }
 
-    private function validate($data)
+    private function validate($data, $excludeId = null)
     {
         $errors = array();
+
         if ($data['name'] === '') {
             $errors[] = 'Tên danh mục không được để trống.';
+        } elseif (mb_strlen($data['name']) > 255) {
+            $errors[] = 'Tên danh mục không được vượt quá 255 ký tự.';
         }
+
+        if (mb_strlen($data['description']) > 2000) {
+            $errors[] = 'Mô tả danh mục không được vượt quá 2000 ký tự.';
+        }
+
+        if ($data['image_url'] !== '') {
+            if (mb_strlen($data['image_url']) > 500) {
+                $errors[] = 'URL hình ảnh không được vượt quá 500 ký tự.';
+            } elseif (!filter_var($data['image_url'], FILTER_VALIDATE_URL)) {
+                $errors[] = 'URL hình ảnh không hợp lệ.';
+            }
+        }
+
+        if ($data['name'] !== '') {
+            $categoryModel = new Category();
+            if ($categoryModel->existsByName($data['name'], $excludeId)) {
+                $errors[] = 'Tên danh mục đã tồn tại, vui lòng chọn tên khác.';
+            }
+        }
+
         return $errors;
     }
 }

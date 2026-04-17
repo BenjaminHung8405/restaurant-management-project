@@ -35,13 +35,26 @@ class AdminOrderController extends AdminBaseController
         $newStatus = strtolower(trim((string) ($_POST['status'] ?? '')));
         $allowedStatuses = array('confirmed', 'cancelled', 'completed');
 
-        if ($reservationId === '' || !in_array($newStatus, $allowedStatuses, true)) {
+        if (!$this->isValidUuid($reservationId) || !in_array($newStatus, $allowedStatuses, true)) {
             $_SESSION['admin_orders_error'] = 'Yêu cầu cập nhật trạng thái không hợp lệ.';
             header('Location: ' . url('/admin/orders'));
             exit;
         }
 
         $reservationModel = new Reservation();
+        $reservation = $reservationModel->find($reservationId);
+        if (!$reservation) {
+            $_SESSION['admin_orders_error'] = 'Đơn đặt bàn không tồn tại hoặc đã bị xóa.';
+            header('Location: ' . url('/admin/orders'));
+            exit;
+        }
+
+        if (($reservation['status'] ?? '') === $newStatus) {
+            $_SESSION['admin_orders_success'] = 'Trạng thái đơn đã ở giá trị yêu cầu.';
+            header('Location: ' . url('/admin/orders'));
+            exit;
+        }
+
         if ($reservationModel->updateStatus($reservationId, $newStatus)) {
             $_SESSION['admin_orders_success'] = 'Cập nhật trạng thái đặt bàn thành công.';
         } else {

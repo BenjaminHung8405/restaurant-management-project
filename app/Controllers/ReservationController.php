@@ -36,25 +36,9 @@ class ReservationController extends BaseController
     {
         $reservationModel = new Reservation();
 
-        $formData = array(
-            'guest_name' => trim((string) ($_POST['guest_name'] ?? '')),
-            'guest_phone' => trim((string) ($_POST['guest_phone'] ?? '')),
-            'reservation_date' => trim((string) ($_POST['reservation_date'] ?? '')),
-            'reservation_time' => trim((string) ($_POST['reservation_time'] ?? '')),
-            'party_size' => max(1, (int) ($_POST['party_size'] ?? 1)),
-            'notes' => trim((string) ($_POST['notes'] ?? ''))
-        );
-
-        $errors = array();
-        if ($formData['guest_name'] === '') $errors[] = 'Vui lòng nhập tên khách.';
-        if ($formData['guest_phone'] === '') $errors[] = 'Vui lòng nhập số điện thoại.';
-        if ($formData['reservation_date'] === '') $errors[] = 'Vui lòng chọn ngày đặt bàn.';
-        if ($formData['reservation_time'] === '') $errors[] = 'Vui lòng chọn giờ đặt bàn.';
-
+        $formData = $this->buildReservationFormData($_POST);
         $reservationDateTime = null;
-        if ($formData['reservation_date'] !== '' && $formData['reservation_time'] !== '') {
-            $reservationDateTime = $formData['reservation_date'] . ' ' . $formData['reservation_time'] . ':00';
-        }
+        $errors = $this->validateReservationFormData($formData, $reservationDateTime);
 
         if (empty($errors)) {
             try {
@@ -99,41 +83,24 @@ class ReservationController extends BaseController
         $json = file_get_contents('php://input');
         $data = json_decode($json, true);
 
-        if (!$data) {
+        if (!is_array($data)) {
             http_response_code(400);
             echo json_encode(['error' => 'Dữ liệu không hợp lệ.']);
             return;
         }
 
-        $formData = array(
-            'guest_name' => trim((string) ($data['guest_name'] ?? '')),
-            'guest_phone' => trim((string) ($data['guest_phone'] ?? '')),
-            'reservation_date' => trim((string) ($data['reservation_date'] ?? '')),
-            'reservation_time' => trim((string) ($data['reservation_time'] ?? '')),
-            'party_size' => max(1, (int) ($data['party_size'] ?? 1)),
-            'notes' => trim((string) ($data['notes'] ?? ''))
-        );
+        $formData = $this->buildReservationFormData($data);
+        $reservationDateTime = null;
+        $errors = $this->validateReservationFormData($formData, $reservationDateTime);
 
-        // Basic validation
-        if (strlen($formData['guest_name']) < 2) {
+        if (!empty($errors)) {
             http_response_code(422);
-            echo json_encode(['error' => 'Vui lòng nhập tên tối thiểu 2 ký tự.']);
+            echo json_encode([
+                'error' => $errors[0],
+                'errors' => $errors
+            ]);
             return;
         }
-
-        if (!preg_match('/^(0\d{9,10}|84\d{9,10})$/', $formData['guest_phone'])) {
-            http_response_code(422);
-            echo json_encode(['error' => 'Số điện thoại không hợp lệ.']);
-            return;
-        }
-
-        if (empty($formData['reservation_date']) || empty($formData['reservation_time'])) {
-            http_response_code(422);
-            echo json_encode(['error' => 'Vui lòng chọn ngày và giờ đặt bàn.']);
-            return;
-        }
-
-        $reservationDateTime = $formData['reservation_date'] . ' ' . $formData['reservation_time'] . ':00';
 
         try {
             $reservationModel = new Reservation();
@@ -157,6 +124,71 @@ class ReservationController extends BaseController
             http_response_code(500);
             echo json_encode(['error' => 'Không thể đặt bàn lúc này. Vui lòng thử lại sau.']);
         }
+    }
+
+    private function buildReservationFormData($input)
+    {
+        return array(
+            'guest_name' => trim((string) ($input['guest_name'] ?? '')),
+            'guest_phone' => $this->normalizePhone($input['guest_phone'] ?? ''),
+            'reservation_date' => trim((string) ($input['reservation_date'] ?? '')),
+            'reservation_time' => trim((string) ($input['reservation_time'] ?? '')),
+            'party_size' => trim((string) ($input['party_size'] ?? '')),
+            'notes' => trim((string) ($input['notes'] ?? ''))
+        );
+    }
+
+    private function validateReservationFormData(&$formData, &$reservationDateTime)
+    {
+        $errors = array();
+
+        if ($formData['guest_name'] === '') {
+            $errors[] = 'Vui lòng nhập tên khách.';
+        } elseif (mb_strlen($formData['guest_name']) > 255) {
+            $errors[] = 'Tên khách không được vượt quá 255 ký tự.';
+        }
+
+        if ($formData['guest_phone'] === '') {
+            $errors[] = 'Vui lòng nhập số điện thoại.';
+        } elseif (!$this->isValidVietnamesePhone($formData['guest_phone'])) {
+            $errors[] = 'Số điện thoại không hợp lệ.';
+        }
+
+        if ($formData['reservation_date'] === '') {
+            $errors[] = 'Vui lòng chọn ngày đặt bàn.';
+        }
+
+        if ($formData['reservation_time'] === '') {
+            $errors[] = 'Vui lòng chọn giờ đặt bàn.';
+        }
+
+        $partySize = $this->parseIntInRange($formData['party_size'], 1, 50);
+        if ($partySize === false) {
+            $errors[] = 'Số lượng khách phải là số nguyên từ 1 đến 50.';
+        } else {
+            $formData['party_size'] = $partySize;
+        }
+
+        if (mb_strlen($formData['notes']) > 1000) {
+            $errors[] = 'Ghi chú không được vượt quá 1000 ký tự.';
+        }
+
+        if ($formData['reservation_date'] !== '' && $formData['reservation_time'] !== '') {
+            $dateTimeError = null;
+            $reservationDateTime = $this->parseReservationDateTime(
+                $formData['reservation_date'],
+                $formData['reservation_time'],
+                $dateTimeError
+            );
+
+            if ($reservationDateTime === null) {
+                $errors[] = $dateTimeError ?: 'Thời gian đặt bàn không hợp lệ.';
+            } elseif (strtotime($reservationDateTime) < time()) {
+                $errors[] = 'Thời gian đặt bàn không được ở quá khứ.';
+            }
+        }
+
+        return $errors;
     }
 
 

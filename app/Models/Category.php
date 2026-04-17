@@ -23,7 +23,11 @@ class Category extends BaseModel
 
     public function create($data)
     {
-        $sql = 'INSERT INTO ' . $this->table . ' (id, name, description, image_url) VALUES (:id, :name, :description, :image_url)';
+        $keys = array_keys($data);
+        $fields = implode(', ', $keys);
+        $placeholders = ':' . implode(', :', $keys);
+
+        $sql = "INSERT INTO {$this->table} ($fields) VALUES ($placeholders)";
         $statement = $this->db->prepare($sql);
         return $statement->execute($data);
     }
@@ -53,5 +57,20 @@ class Category extends BaseModel
         $statement = $this->db->prepare($sql);
         $statement->execute(array('id' => $id));
         return (int)$statement->fetchColumn() > 0;
+    }
+
+    public function existsByName($name, $excludeId = null)
+    {
+        $sql = 'SELECT COUNT(*) FROM ' . $this->table . ' WHERE name = :name';
+        $params = array('name' => $name);
+
+        if ($excludeId !== null) {
+            $sql .= ' AND id <> :exclude_id';
+            $params['exclude_id'] = $excludeId;
+        }
+
+        $statement = $this->db->prepare($sql);
+        $statement->execute($params);
+        return (int) $statement->fetchColumn() > 0;
     }
 }

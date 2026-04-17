@@ -34,33 +34,9 @@ class AdminReservationController extends AdminBaseController
         $reservationModel = new Reservation();
         $tableModel = new Table();
 
-        $formData = array(
-            'guest_name' => trim((string) ($_POST['guest_name'] ?? '')),
-            'guest_phone' => trim((string) ($_POST['guest_phone'] ?? '')),
-            'reservation_date' => trim((string) ($_POST['reservation_date'] ?? '')),
-            'reservation_time' => trim((string) ($_POST['reservation_time'] ?? '')),
-            'guest_count' => (int) ($_POST['guest_count'] ?? 0),
-            'table_id' => trim((string) ($_POST['table_id'] ?? '')),
-            'notes' => trim((string) ($_POST['notes'] ?? ''))
-        );
-
-        $errors = array();
-        if ($formData['guest_name'] === '') $errors[] = 'Vui lòng nhập tên khách hàng.';
-        if ($formData['guest_phone'] === '') $errors[] = 'Vui lòng nhập số điện thoại.';
-        if ($formData['reservation_date'] === '') $errors[] = 'Vui lòng chọn ngày đặt bàn.';
-        if ($formData['reservation_time'] === '') $errors[] = 'Vui lòng chọn giờ đặt bàn.';
-        if ($formData['guest_count'] <= 0) $errors[] = 'Số lượng khách phải lớn hơn 0.';
-        if ($formData['table_id'] === '') $errors[] = 'Vui lòng chọn bàn được gán.';
-
+        $formData = $this->buildAdminReservationFormData($_POST);
         $reservationDateTime = null;
-        if ($formData['reservation_date'] !== '' && $formData['reservation_time'] !== '') {
-            $reservationDateTime = $formData['reservation_date'] . ' ' . $formData['reservation_time'] . ':00';
-            
-            // Check if reservation time is in the past
-            if (strtotime($reservationDateTime) < time()) {
-                $errors[] = 'Thời gian đặt bàn không được ở quá khứ.';
-            }
-        }
+        $errors = $this->validateAdminReservationFormData($tableModel, $formData, $reservationDateTime);
 
         if (empty($errors)) {
             try {
@@ -68,7 +44,7 @@ class AdminReservationController extends AdminBaseController
                 
                 $result = $reservationModel->create(array(
                     'id' => $reservationId,
-                    'user_id' => $_SESSION['user']['id'] ?? null,
+                    'user_id' => $_SESSION['user']['user_id'] ?? ($_SESSION['user_id'] ?? null),
                     'table_id' => $formData['table_id'],
                     'reservation_time' => $reservationDateTime,
                     'guest_count' => $formData['guest_count'],
@@ -100,5 +76,93 @@ class AdminReservationController extends AdminBaseController
             'formData' => $formData,
             'errors' => $errors
         ), 'layouts/admin');
+    }
+
+    private function buildAdminReservationFormData($input)
+    {
+        return array(
+            'guest_name' => trim((string) ($input['guest_name'] ?? '')),
+            'guest_phone' => $this->normalizePhone($input['guest_phone'] ?? ''),
+            'reservation_date' => trim((string) ($input['reservation_date'] ?? '')),
+            'reservation_time' => trim((string) ($input['reservation_time'] ?? '')),
+            'guest_count' => trim((string) ($input['guest_count'] ?? '')),
+            'table_id' => trim((string) ($input['table_id'] ?? '')),
+            'notes' => trim((string) ($input['notes'] ?? ''))
+        );
+    }
+
+    private function validateAdminReservationFormData(Table $tableModel, &$formData, &$reservationDateTime)
+    {
+        $errors = array();
+
+        if ($formData['guest_name'] === '') {
+            $errors[] = 'Vui lòng nhập tên khách hàng.';
+        } elseif (mb_strlen($formData['guest_name']) > 255) {
+            $errors[] = 'Tên khách hàng không được vượt quá 255 ký tự.';
+        }
+
+        if ($formData['guest_phone'] === '') {
+            $errors[] = 'Vui lòng nhập số điện thoại.';
+        } elseif (!$this->isValidVietnamesePhone($formData['guest_phone'])) {
+            $errors[] = 'Số điện thoại không hợp lệ.';
+        }
+
+        $guestCount = $this->parseIntInRange($formData['guest_count'], 1, 50);
+        if ($guestCount === false) {
+            $errors[] = 'Số lượng khách phải là số nguyên từ 1 đến 50.';
+        } else {
+            $formData['guest_count'] = $guestCount;
+        }
+
+        if ($formData['table_id'] === '') {
+            $errors[] = 'Vui lòng chọn bàn được gán.';
+        } elseif (!$this->isValidUuid($formData['table_id'])) {
+            $errors[] = 'Mã bàn không hợp lệ.';
+        }
+
+        if (mb_strlen($formData['notes']) > 1000) {
+            $errors[] = 'Ghi chú không được vượt quá 1000 ký tự.';
+        }
+
+        if ($formData['reservation_date'] === '') {
+            $errors[] = 'Vui lòng chọn ngày đặt bàn.';
+        }
+
+        if ($formData['reservation_time'] === '') {
+            $errors[] = 'Vui lòng chọn giờ đặt bàn.';
+        }
+
+        if ($formData['reservation_date'] !== '' && $formData['reservation_time'] !== '') {
+            $dateTimeError = null;
+            $reservationDateTime = $this->parseReservationDateTime(
+                $formData['reservation_date'],
+                $formData['reservation_time'],
+                $dateTimeError
+            );
+
+            if ($reservationDateTime === null) {
+                $errors[] = $dateTimeError ?: 'Thời gian đặt bàn không hợp lệ.';
+            } elseif (strtotime($reservationDateTime) < time()) {
+                $errors[] = 'Thời gian đặt bàn không được ở quá khứ.';
+            }
+        }
+
+        if ($formData['table_id'] !== '' && $this->isValidUuid($formData['table_id'])) {
+            // Kiểm tra FK và sức chứa bàn trước khi ghi DB để tránh lỗi ràng buộc.
+            $table = $tableModel->find($formData['table_id']);
+            if (!$table) {
+                $errors[] = 'Bàn được chọn không tồn tại.';
+            } else {
+                if (($table['status'] ?? '') !== 'available') {
+                    $errors[] = 'Bàn được chọn hiện không ở trạng thái sẵn sàng.';
+                }
+
+                if ($guestCount !== false && (int) ($table['capacity'] ?? 0) < $guestCount) {
+                    $errors[] = 'Số khách vượt quá sức chứa của bàn được chọn.';
+                }
+            }
+        }
+
+        return $errors;
     }
 }

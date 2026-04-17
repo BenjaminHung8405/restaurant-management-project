@@ -56,7 +56,7 @@ class Meal extends BaseModel
         return $statement->fetch();
     }
 
-    public function all($search = '', $categoryId = '')
+    public function all($search = '', $categoryId = '', $status = '')
     {
         $sql = '
             SELECT m.*, c.name as category_name 
@@ -76,6 +76,11 @@ class Meal extends BaseModel
             $params['category_id'] = $categoryId;
         }
 
+        if ($status !== '') {
+            $sql .= ' AND m.is_available = :status';
+            $params['status'] = $status === 'available' ? 1 : 0;
+        }
+
         $sql .= ' ORDER BY m.created_at DESC';
         $statement = $this->db->prepare($sql);
         $statement->execute($params);
@@ -84,13 +89,11 @@ class Meal extends BaseModel
 
     public function create($data)
     {
-        $sql = '
-            INSERT INTO ' . $this->table . ' (
-                id, name, description, price, image_url, area, category_id, is_available, is_featured
-            ) VALUES (
-                :id, :name, :description, :price, :image_url, :area, :category_id, :is_available, :is_featured
-            )
-        ';
+        $keys = array_keys($data);
+        $fields = implode(', ', $keys);
+        $placeholders = ':' . implode(', :', $keys);
+
+        $sql = "INSERT INTO {$this->table} ($fields) VALUES ($placeholders)";
         $statement = $this->db->prepare($sql);
         return $statement->execute($data);
     }

@@ -6,6 +6,14 @@ class Reservation extends BaseModel
 {
     protected $table = 'reservations';
 
+    public function find($id)
+    {
+        $sql = 'SELECT * FROM ' . $this->table . ' WHERE id = :id LIMIT 1';
+        $statement = $this->db->prepare($sql);
+        $statement->execute(array('id' => $id));
+        return $statement->fetch();
+    }
+
     public function create($data)
     {
         $sql = '
