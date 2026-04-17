@@ -100,13 +100,6 @@ $isLoggedIn = isset($_SESSION['user_id']);
                 <a href="<?php echo url('/menu'); ?>" class="px-4 py-2 rounded-lg text-sm font-medium text-neutral-600 hover:text-primary-500 hover:bg-white transition-all">Thực đơn</a>
                 <button onclick="openReservationModal()" class="px-4 py-2 rounded-lg text-sm font-medium text-neutral-600 hover:text-primary-500 hover:bg-white transition-all cursor-pointer">Đặt bàn</button>
                 
-                <div class="h-4 w-px bg-neutral-200 mx-2"></div>
-
-                <!-- Desktop Cart -->
-                <a href="<?php echo url('/cart'); ?>" class="relative group p-2 mx-1 text-neutral-600 hover:text-primary-500 transition-all" aria-label="Giỏ hàng">
-                    <i data-lucide="shopping-cart" class="w-5 h-5"></i>
-                    <span id="cart-badge-desktop" class="cart-badge hidden">0</span>
-                </a>
 
                 <?php if ($isLoggedIn): ?>
                     <a href="<?php echo url('/admin/dashboard'); ?>" class="ml-2 flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-semibold text-neutral-700 hover:bg-neutral-100 transition-all">
@@ -124,10 +117,6 @@ $isLoggedIn = isset($_SESSION['user_id']);
 
             <!-- Right Actions (Mobile Toggle) -->
             <div class="flex items-center gap-3 md:hidden">
-                <a href="<?php echo url('/cart'); ?>" class="relative p-2 text-neutral-700 hover:text-primary-500 transition-all">
-                    <i data-lucide="shopping-cart" class="w-6 h-6"></i>
-                    <span id="cart-badge-mobile" class="cart-badge hidden">0</span>
-                </a>
                 <button onclick="toggleMobileMenu()" class="p-2 -mr-2 text-neutral-700 cursor-pointer" aria-label="Mở menu">
                     <i id="mobile-menu-icon" data-lucide="menu" class="w-7 h-7"></i>
                 </button>
@@ -269,6 +258,20 @@ $isLoggedIn = isset($_SESSION['user_id']);
         </div>
     </footer>
 
+    <!-- Floating Cart Bar Container (Global) -->
+    <div id="floating-cart-container" class="z-50">
+        <?php 
+        // We can optionally pre-render it here if we have $cartCount/status available globally,
+        // but since this is main layout, we might just let updateCartBadge fetch it or
+        // use a small PHP check if we have the session.
+        if (!empty($_SESSION['cart'])): 
+           // We might not have $cartCount/Total here yet, so we'll rely on the status_bar partial
+           // or just wait for DOMContentLoaded to fetch it.
+        ?>
+           <script>document.addEventListener('DOMContentLoaded', updateCartUI);</script>
+        <?php endif; ?>
+    </div>
+
     <?php include_once VIEW_PATH . '/partials/reservation_modal.php'; ?>
 
     <script>
@@ -306,37 +309,14 @@ $isLoggedIn = isset($_SESSION['user_id']);
         // Cart Badge Logic
         async function updateCartBadge(providedData = null) {
             try {
-                let data = providedData;
-                if (!data) {
-                    const response = await fetch('<?php echo url('/cart/status'); ?>', {
+                // This function now primarily triggers updateCartUI or processes direct data
+                // We no longer have individual badge elements in the header to update manually.
+                if (!providedData) {
+                    // Just a dummy fetch if needed, but usually we call updateCartUI directly
+                    await fetch('<?php echo url('/cart/status'); ?>', {
                         headers: { 'X-Requested-With': 'XMLHttpRequest' }
                     });
-                    data = await response.json();
                 }
-                
-                const badges = [
-                    document.getElementById('cart-badge-desktop'),
-                    document.getElementById('cart-badge-mobile')
-                ];
-                
-                badges.forEach(badge => {
-                    if (badge) {
-                        if (data.cartCount > 0) {
-                            const oldCount = badge.textContent;
-                            badge.textContent = data.cartCount > 99 ? '99+' : data.cartCount;
-                            badge.classList.remove('hidden');
-                            
-                            // Re-trigger animation if count changed
-                            if (oldCount !== badge.textContent) {
-                                badge.style.animation = 'none';
-                                badge.offsetHeight; // trigger reflow
-                                badge.style.animation = '';
-                            }
-                        } else {
-                            badge.classList.add('hidden');
-                        }
-                    }
-                });
             } catch (err) {
                 console.error('Failed to update cart badge:', err);
             }
@@ -344,7 +324,7 @@ $isLoggedIn = isset($_SESSION['user_id']);
 
         // Initialize things on load
         document.addEventListener('DOMContentLoaded', () => {
-            updateCartBadge();
+            updateCartUI();
             // Lucide icons are already initialized via the script in <head> usually,
             // but let's ensure it runs for dynamically changed content if needed.
             if (window.lucide) {
@@ -365,28 +345,52 @@ $isLoggedIn = isset($_SESSION['user_id']);
         const timeLabel = document.getElementById('res_selected_time_label');
         const timeChevron = document.getElementById('res_time_chevron');
         const timeSlotsContainer = document.getElementById('res_time_slots_container');
-        const notesTextArea = document.getElementById('res_notes');
         const notesCount = document.getElementById('res_notes_count');
 
         const OPENING_HOUR = 10;
         const CLOSING_HOUR = 22;
         const STEP_MINUTES = 30;
 
+        async function updateCartUI() {
+            try {
+                // Update Badge
+                if (typeof updateCartBadge === 'function') await updateCartBadge();
+                
+                // Update Floating Bar
+                const container = document.getElementById('floating-cart-container');
+                if (container) {
+                    const resp = await fetch('<?php echo url("/cart/status_bar"); ?>');
+                    if (resp.ok) {
+                        const html = await resp.text();
+                        container.innerHTML = html;
+                        // Initialize icons in the newly added content
+                        if (window.lucide) lucide.createIcons();
+                    }
+                }
+            } catch (err) {
+                console.error('Failed to update Cart UI:', err);
+            }
+        }
+
         function openReservationModal() {
+            if (!resModal || !resForm) return;
+
             resModal.classList.remove('hidden');
             resModal.classList.add('flex');
             
             // Reset state
             resForm.classList.remove('hidden');
-            resSuccessState.classList.add('hidden');
+            if (resSuccessState) resSuccessState.classList.add('hidden');
             resForm.reset();
             clearResErrors();
 
             // Reset custom dropdown
-            timeLabel.textContent = 'Chọn giờ đặt bàn';
-            timeLabel.classList.remove('text-neutral-900', 'font-semibold');
-            timeLabel.classList.add('text-neutral-400');
-            timeSelect.value = '';
+            if (timeLabel) {
+                timeLabel.textContent = 'Chọn giờ đặt bàn';
+                timeLabel.classList.remove('text-neutral-900', 'font-semibold');
+                timeLabel.classList.add('text-neutral-400');
+            }
+            if (timeSelect) timeSelect.value = '';
             closeTimeDropdown();
             
             // Set default date to today
@@ -395,16 +399,17 @@ $isLoggedIn = isset($_SESSION['user_id']);
             const mm = String(today.getMonth() + 1).padStart(2, '0');
             const dd = String(today.getDate()).padStart(2, '0');
             
-            dateInput.value = `${dd}/${mm}/${yyyy}`;
-            hiddenDateInput.value = `${yyyy}-${mm}-${dd}`;
+            if (dateInput) dateInput.value = `${dd}/${mm}/${yyyy}`;
+            if (hiddenDateInput) hiddenDateInput.value = `${yyyy}-${mm}-${dd}`;
             
             updateTimeSlots();
 
             setTimeout(() => {
-                resContent.classList.remove('translate-y-4', 'opacity-0');
+                if (resContent) resContent.classList.remove('translate-y-4', 'opacity-0');
                 document.body.style.overflow = 'hidden';
             }, 10);
         }
+
 
         function closeReservationModal() {
             resContent.classList.add('translate-y-4', 'opacity-0');
@@ -490,32 +495,37 @@ $isLoggedIn = isset($_SESSION['user_id']);
         }
 
         // Date input formatting logic
-        dateInput.onblur = function() {
-            const val = this.value.trim();
-            const match = val.match(/^(\d{2})\/(\d{2})\/(\d{4})$/);
-            if (match) {
-                const d = match[1], m = match[2], y = match[3];
-                const isoDate = `${y}-${m}-${d}`;
-                const testDate = new Date(isoDate);
-                if (!isNaN(testDate.getTime())) {
-                    hiddenDateInput.value = isoDate;
-                    updateTimeSlots();
-                    return;
+        if (dateInput) {
+            dateInput.onblur = function() {
+                const val = this.value.trim();
+                const match = val.match(/^(\d{2})\/(\d{2})\/(\d{4})$/);
+                if (match) {
+                    const d = match[1], m = match[2], y = match[3];
+                    const isoDate = `${y}-${m}-${d}`;
+                    const testDate = new Date(isoDate);
+                    if (!isNaN(testDate.getTime())) {
+                        hiddenDateInput.value = isoDate;
+                        updateTimeSlots();
+                        return;
+                    }
                 }
-            }
-            // If invalid, revert to today
-            const today = new Date();
-            const yyyy = today.getFullYear();
-            const mm = String(today.getMonth() + 1).padStart(2, '0');
-            const dd = String(today.getDate()).padStart(2, '0');
-            this.value = `${dd}/${mm}/${yyyy}`;
-            hiddenDateInput.value = `${yyyy}-${mm}-${dd}`;
-            updateTimeSlots();
-        };
+                // If invalid, revert to today
+                const today = new Date();
+                const yyyy = today.getFullYear();
+                const mm = String(today.getMonth() + 1).padStart(2, '0');
+                const dd = String(today.getDate()).padStart(2, '0');
+                this.value = `${dd}/${mm}/${yyyy}`;
+                hiddenDateInput.value = `${yyyy}-${mm}-${dd}`;
+                updateTimeSlots();
+            };
+        }
 
-        notesTextArea.oninput = function() {
-            notesCount.textContent = `${this.value.length}/300`;
-        };
+        const notesTextArea = document.getElementById('res_notes');
+        if (notesTextArea && notesCount) {
+            notesTextArea.oninput = function() {
+                notesCount.textContent = `${this.value.length}/300`;
+            };
+        }
 
         async function handleReservationSubmit(e) {
             e.preventDefault();

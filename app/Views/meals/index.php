@@ -304,12 +304,7 @@ if ($categoryId === '') {
     </div>
 </section>
 
-<!-- Floating Cart Bar Container -->
-<div id="floating-cart-container" class="transition-all duration-500">
-    <?php if ($cartCount > 0): ?>
-        <?php include 'floating_cart_bar.php'; ?>
-    <?php endif; ?>
-</div>
+
 
 <!-- Popup Đặt Món -->
 <div id="meal-modal" class="fixed inset-0 z-[100] hidden items-center justify-center">
@@ -418,54 +413,72 @@ if ($categoryId === '') {
     let currentQty = 1;
 
     function openMealModal(btn) {
-        const item = JSON.parse(btn.getAttribute('data-item'));
-        currentItem = item;
-        currentQty = 1;
+        try {
+            const item = JSON.parse(btn.getAttribute('data-item'));
+            currentItem = item;
+            currentQty = 1;
 
-        // Populate fields
-        document.getElementById('modal-name').textContent = item.name;
-        document.getElementById('modal-price').textContent = formatNumber(item.price);
-        document.getElementById('modal-description').textContent = item.description;
-        document.getElementById('modal-qty').textContent = currentQty;
-        document.getElementById('modal-notes').value = '';
-        document.getElementById('modal-category').textContent = item.category_name;
-        
-        const img = document.getElementById('modal-image');
-        const imgContainer = document.getElementById('modal-image-container');
-        if (item.image_url) {
-            img.src = item.image_url;
-            imgContainer.classList.remove('hidden');
-        } else {
-            imgContainer.classList.add('hidden');
-        }
+            // Populate fields
+            const nameEl = document.getElementById('modal-name');
+            const priceEl = document.getElementById('modal-price');
+            const descEl = document.getElementById('modal-description');
+            const qtyEl = document.getElementById('modal-qty');
+            const categoryEl = document.getElementById('modal-category');
+            const notesEl = document.getElementById('modal-notes');
 
-        updateModalSubtotal();
-
-        // Show modal
-        const modal = document.getElementById('meal-modal');
-        const backdrop = modal.querySelector('.modal-backdrop');
-        const content = modal.querySelector('.modal-content');
-
-        modal.classList.remove('hidden');
-        modal.classList.add('flex'); // Ensure it's flex for centering
-        
-        content.classList.remove('scale-95', 'opacity-0');
-        content.classList.add('scale-100', 'opacity-100');
-        content.classList.remove('pointer-events-none');
-        content.classList.add('pointer-events-auto');
-
-        setTimeout(() => {
-            backdrop.classList.remove('opacity-0');
-            backdrop.classList.add('opacity-100');
-            backdrop.classList.remove('pointer-events-none');
-            backdrop.classList.add('pointer-events-auto');
+            if (nameEl) nameEl.textContent = item.name;
+            if (priceEl) priceEl.textContent = formatNumber(item.price);
+            if (descEl) descEl.textContent = item.description;
+            if (qtyEl) qtyEl.textContent = currentQty;
+            if (notesEl) notesEl.value = '';
+            if (categoryEl) categoryEl.textContent = item.category_name;
             
-        }, 50);
+            const img = document.getElementById('modal-image');
+            const imgContainer = document.getElementById('modal-image-container');
+            if (img && imgContainer) {
+                if (item.image_url) {
+                    img.src = item.image_url;
+                    imgContainer.classList.remove('hidden');
+                } else {
+                    imgContainer.classList.add('hidden');
+                }
+            }
 
-        document.body.style.overflow = 'hidden';
-        
-        // Refresh Lucide icons in modal
-        if (typeof lucide !== 'undefined') lucide.createIcons();
+            updateModalSubtotal();
+
+            // Show modal
+            const modal = document.getElementById('meal-modal');
+            if (!modal) return;
+
+            const backdrop = modal.querySelector('.modal-backdrop');
+            const content = modal.querySelector('.modal-content');
+
+            modal.classList.remove('hidden');
+            modal.classList.add('flex'); // Ensure it's flex for centering
+            
+            if (content) {
+                content.classList.remove('scale-95', 'opacity-0');
+                content.classList.add('scale-100', 'opacity-100');
+                content.classList.remove('pointer-events-none');
+                content.classList.add('pointer-events-auto');
+            }
+
+            if (backdrop) {
+                setTimeout(() => {
+                    backdrop.classList.remove('opacity-0');
+                    backdrop.classList.add('opacity-100');
+                    backdrop.classList.remove('pointer-events-none');
+                    backdrop.classList.add('pointer-events-auto');
+                }, 50);
+            }
+
+            document.body.style.overflow = 'hidden';
+            
+            // Refresh Lucide icons in modal
+            if (typeof lucide !== 'undefined') lucide.createIcons();
+        } catch (err) {
+            console.error('Error opening meal modal:', err);
+        }
     }
 
     function closeMealModal() {
@@ -530,9 +543,8 @@ if ($categoryId === '') {
             if (response.ok) {
                 const data = await response.json();
                 if (data.success) {
-                    updateFloatingCart(data);
-                    if (typeof updateCartBadge === 'function') {
-                        updateCartBadge(); // Force a fresh fetch to ensure header sync
+                    if (typeof updateCartUI === 'function') {
+                        updateCartUI();
                     }
                     closeMealModal();
                     // Optional: Show a small toast notification
@@ -547,21 +559,7 @@ if ($categoryId === '') {
         }
     }
 
-    async function updateFloatingCart(data) {
-        const container = document.getElementById('floating-cart-container');
-        
-        try {
-            // Re-fetch the floating bar partial via AJAX to ensure consistency
-            const resp = await fetch('<?php echo url("/cart/status_bar"); ?>');
-            if (resp.ok) {
-                const html = await resp.text();
-                container.innerHTML = html;
-                if (typeof lucide !== 'undefined') lucide.createIcons();
-            }
-        } catch (error) {
-            console.error('Failed to update cart bar:', error);
-        }
-    }
+
 
     document.addEventListener('DOMContentLoaded', () => {
         // Move modal outside of any transform containers (like .animate-fade-in) 

@@ -297,16 +297,13 @@
         
         if (totalEl) totalEl.textContent = data.cartTotalFormatted;
         if (countEl) {
-            // Re-calculate the actual unique items count if it's not provided separately
-            // But usually we just want the display of quantity or unique items.
-            // The sidebar currently shows count($cartItems) which is unique items.
             const uniqueItemsCount = document.querySelectorAll('[id^="cart-item-"]').length;
             countEl.textContent = `${uniqueItemsCount} món`;
         }
         
-        // Sync the header badge
-        if (typeof updateCartBadge === 'function') {
-            updateCartBadge();
+        // Sync the header badge and floating bar
+        if (typeof window.updateCartUI === 'function') {
+            window.updateCartUI();
         }
     }
 </script>
