@@ -259,6 +259,11 @@ $isLoggedIn = isset($_SESSION['user_id']);
         const dateInput = document.getElementById('res_date_display');
         const hiddenDateInput = document.getElementById('res_reservation_date');
         const timeSelect = document.getElementById('res_reservation_time');
+        const timeToggle = document.getElementById('res_reservation_time_toggle');
+        const timeDropdown = document.getElementById('res_time_dropdown');
+        const timeLabel = document.getElementById('res_selected_time_label');
+        const timeChevron = document.getElementById('res_time_chevron');
+        const timeSlotsContainer = document.getElementById('res_time_slots_container');
         const notesTextArea = document.getElementById('res_notes');
         const notesCount = document.getElementById('res_notes_count');
 
@@ -275,6 +280,13 @@ $isLoggedIn = isset($_SESSION['user_id']);
             resSuccessState.classList.add('hidden');
             resForm.reset();
             clearResErrors();
+
+            // Reset custom dropdown
+            timeLabel.textContent = 'Chọn giờ đặt bàn';
+            timeLabel.classList.remove('text-neutral-900', 'font-semibold');
+            timeLabel.classList.add('text-neutral-400');
+            timeSelect.value = '';
+            closeTimeDropdown();
             
             // Set default date to today
             const today = new Date();
@@ -310,6 +322,36 @@ $isLoggedIn = isset($_SESSION['user_id']);
             document.getElementById('res_global_error').classList.add('hidden');
         }
 
+        function toggleTimeDropdown() {
+            const isHidden = timeDropdown.classList.contains('hidden');
+            if (isHidden) {
+                openTimeDropdown();
+            } else {
+                closeTimeDropdown();
+            }
+        }
+
+        function openTimeDropdown() {
+            timeDropdown.classList.remove('hidden');
+            timeChevron.classList.add('rotate-180');
+            timeToggle.classList.add('ring-2', 'ring-orange-500', 'border-orange-500');
+        }
+
+        function closeTimeDropdown() {
+            timeDropdown.classList.add('hidden');
+            timeChevron.classList.remove('rotate-180');
+            timeToggle.classList.remove('ring-2', 'ring-orange-500', 'border-orange-500');
+        }
+
+        function selectTimeSlot(time) {
+            timeSelect.value = time;
+            timeLabel.textContent = time;
+            timeLabel.classList.add('text-neutral-900', 'font-semibold');
+            timeLabel.classList.remove('text-neutral-400');
+            closeTimeDropdown();
+            clearResErrors();
+        }
+
         function updateTimeSlots() {
             const selectedDateStr = hiddenDateInput.value;
             const now = new Date();
@@ -324,13 +366,10 @@ $isLoggedIn = isset($_SESSION['user_id']);
                 startMinutes = Math.max(startMinutes, roundedNow + STEP_MINUTES);
             }
 
-            timeSelect.innerHTML = '<option value="">Chọn giờ đặt bàn</option>';
+            timeSlotsContainer.innerHTML = '';
             
             if (startMinutes > endMinutes) {
-                const opt = document.createElement('option');
-                opt.disabled = true;
-                opt.textContent = 'Hết khung giờ khả dụng cho hôm nay';
-                timeSelect.appendChild(opt);
+                timeSlotsContainer.innerHTML = '<div class="col-span-3 py-4 text-center text-xs text-neutral-400 italic font-medium">Hết khung giờ khả dụng cho hôm nay</div>';
                 return;
             }
 
@@ -338,10 +377,14 @@ $isLoggedIn = isset($_SESSION['user_id']);
                 const h = Math.floor(min / 60);
                 const m = min % 60;
                 const timeStr = `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}`;
-                const opt = document.createElement('option');
-                opt.value = timeStr;
-                opt.textContent = timeStr;
-                timeSelect.appendChild(opt);
+                
+                const btn = document.createElement('button');
+                btn.type = 'button';
+                btn.className = 'flex items-center justify-center rounded-md border border-neutral-100 py-2.5 text-sm font-medium text-neutral-600 transition-all hover:border-orange-200 hover:bg-orange-50 hover:text-orange-600 cursor-pointer';
+                btn.textContent = timeStr;
+                btn.onclick = () => selectTimeSlot(timeStr);
+                
+                timeSlotsContainer.appendChild(btn);
             }
         }
 
@@ -446,8 +489,22 @@ $isLoggedIn = isset($_SESSION['user_id']);
         }
 
         window.addEventListener('keydown', (e) => {
-            if (e.key === 'Escape' && !resModal.classList.contains('hidden')) {
-                closeReservationModal();
+            if (e.key === 'Escape') {
+                if (!resModal.classList.contains('hidden')) {
+                    closeReservationModal();
+                }
+                if (!timeDropdown.classList.contains('hidden')) {
+                    closeTimeDropdown();
+                }
+            }
+        });
+
+        // Click outside to close dropdown
+        window.addEventListener('mousedown', (e) => {
+            if (!timeDropdown.classList.contains('hidden') && 
+                !timeDropdown.contains(e.target) && 
+                !timeToggle.contains(e.target)) {
+                closeTimeDropdown();
             }
         });
     </script>

@@ -56,10 +56,20 @@
                     </div>
 
                     <div>
-                        <label for="res_reservation_time" class="mb-1 block text-sm font-medium text-neutral-700">Giờ đặt bàn</label>
-                        <select id="res_reservation_time" name="reservation_time" class="w-full rounded-lg border border-neutral-300 bg-white px-3 py-2.5 text-sm text-neutral-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange-500 disabled:cursor-not-allowed disabled:bg-neutral-100">
-                            <option value="">Chọn giờ đặt bàn</option>
-                        </select>
+                        <label for="res_reservation_time_toggle" class="mb-1 block text-sm font-medium text-neutral-700">Giờ đặt bàn</label>
+                        <div class="relative">
+                            <button type="button" id="res_reservation_time_toggle" onclick="toggleTimeDropdown()" class="flex w-full items-center justify-between rounded-lg border border-neutral-300 bg-white px-3 py-2.5 text-sm text-neutral-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange-500 cursor-pointer">
+                                <span id="res_selected_time_label">Chọn giờ đặt bàn</span>
+                                <i data-lucide="chevron-down" id="res_time_chevron" class="h-4 w-4 text-neutral-400 transition-transform duration-200"></i>
+                            </button>
+                            <!-- Custom Dropdown Menu -->
+                            <div id="res_time_dropdown" class="absolute left-0 right-0 z-[90] mt-1 hidden max-h-60 overflow-y-auto rounded-lg border border-neutral-200 bg-white py-1 shadow-lg animate-in fade-in slide-in-from-top-2 duration-200 custom-scrollbar">
+                                <div id="res_time_slots_container" class="grid grid-cols-3 gap-1 p-2">
+                                    <!-- Time slots will be injected here -->
+                                </div>
+                            </div>
+                            <input type="hidden" id="res_reservation_time" name="reservation_time">
+                        </div>
                         <p id="res_time_hint" class="mt-1 text-xs text-neutral-500">Chúng tôi mở cửa 10:00 - 22:00.</p>
                         <p id="res_reservation_time_error" class="hidden mt-1 text-xs text-red-600"></p>
                     </div>
