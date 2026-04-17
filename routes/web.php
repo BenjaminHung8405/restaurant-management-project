@@ -45,4 +45,5 @@ return function (Router $router) {
     // Reservation Routes
     $router->get('/reservation', array(ReservationController::class, 'index'));
     $router->post('/reservation', array(ReservationController::class, 'store'));
+    $router->post('/api/reservation', array(ReservationController::class, 'apiStore'));
 };

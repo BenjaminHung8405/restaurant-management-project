@@ -33,9 +33,9 @@
                 <a href="<?php echo url('/menu'); ?>" class="w-full sm:w-auto px-8 py-4 rounded-xl bg-primary-500 text-white font-bold text-lg shadow-lg shadow-primary-500/20 hover:bg-primary-600 hover:-translate-y-1 transition-all">
                     Khám phá thực đơn
                 </a>
-                <a href="<?php echo url('/reservation'); ?>" class="w-full sm:w-auto px-8 py-4 rounded-xl border-2 border-primary-500 text-primary-600 font-bold text-lg hover:bg-orange-50 transition-all">
+                <button onclick="openReservationModal()" class="w-full sm:w-auto px-8 py-4 rounded-xl border-2 border-primary-500 text-primary-600 font-bold text-lg hover:bg-orange-50 transition-all cursor-pointer">
                     Đặt bàn ngay
-                </a>
+                </button>
             </div>
 
             <!-- Social proof -->
@@ -167,9 +167,9 @@
                 <a href="<?php echo url('/menu'); ?>" class="px-8 py-4 rounded-xl bg-white text-primary-700 font-bold hover:bg-neutral-100 transition-all">
                     Khám phá menu
                 </a>
-                <a href="<?php echo url('/reservation'); ?>" class="px-8 py-4 rounded-xl border border-white/40 text-white font-bold hover:bg-white/10 transition-all">
+                <button onclick="openReservationModal()" class="px-8 py-4 rounded-xl border border-white/40 text-white font-bold hover:bg-white/10 transition-all cursor-pointer">
                     Đặt bàn ngay
-                </a>
+                </button>
             </div>
         </div>
     </section>

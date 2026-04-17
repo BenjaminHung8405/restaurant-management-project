@@ -162,6 +162,75 @@ class ReservationController extends BaseController
             'errors' => $errors
         ));
     }
+    public function apiStore()
+    {
+        // Set header to JSON
+        header('Content-Type: application/json');
+
+        // Read JSON input
+        $json = file_get_contents('php://input');
+        $data = json_decode($json, true);
+
+        if (!$data) {
+            http_response_code(400);
+            echo json_encode(['error' => 'Dữ liệu không hợp lệ.']);
+            return;
+        }
+
+        $formData = array(
+            'guest_name' => trim((string) ($data['guest_name'] ?? '')),
+            'guest_phone' => trim((string) ($data['guest_phone'] ?? '')),
+            'reservation_date' => trim((string) ($data['reservation_date'] ?? '')),
+            'reservation_time' => trim((string) ($data['reservation_time'] ?? '')),
+            'party_size' => max(1, (int) ($data['party_size'] ?? 1)),
+            'notes' => trim((string) ($data['notes'] ?? ''))
+        );
+
+        // Basic validation
+        if (strlen($formData['guest_name']) < 2) {
+            http_response_code(422);
+            echo json_encode(['error' => 'Vui lòng nhập tên tối thiểu 2 ký tự.']);
+            return;
+        }
+
+        if (!preg_match('/^(0\d{9,10}|84\d{9,10})$/', $formData['guest_phone'])) {
+            http_response_code(422);
+            echo json_encode(['error' => 'Số điện thoại không hợp lệ.']);
+            return;
+        }
+
+        if (empty($formData['reservation_date']) || empty($formData['reservation_time'])) {
+            http_response_code(422);
+            echo json_encode(['error' => 'Vui lòng chọn ngày và giờ đặt bàn.']);
+            return;
+        }
+
+        $reservationDateTime = $formData['reservation_date'] . ' ' . $formData['reservation_time'] . ':00';
+
+        try {
+            $reservationModel = new Reservation();
+            $reservationId = $this->uuid();
+            
+            $reservationModel->create(array(
+                'id' => $reservationId,
+                'user_id' => isset($_SESSION['user_id']) ? $_SESSION['user_id'] : null,
+                'table_id' => null,
+                'reservation_time' => $reservationDateTime,
+                'guest_count' => $formData['party_size'],
+                'guest_name' => $formData['guest_name'],
+                'guest_phone' => $formData['guest_phone'],
+                'notes' => $formData['notes'] !== '' ? $formData['notes'] : null,
+                'status' => 'pending'
+            ));
+
+            echo json_encode(['success' => true, 'message' => 'Đặt bàn thành công!', 'id' => $reservationId]);
+        } catch (Throwable $e) {
+            error_log('API Reservation error: ' . $e->getMessage());
+            http_response_code(500);
+            echo json_encode(['error' => 'Không thể đặt bàn lúc này. Vui lòng thử lại sau.']);
+        }
+    }
+
 
     private function uuid()
     {
