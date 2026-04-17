@@ -531,6 +531,9 @@ if ($categoryId === '') {
                 const data = await response.json();
                 if (data.success) {
                     updateFloatingCart(data);
+                    if (typeof updateCartBadge === 'function') {
+                        updateCartBadge(); // Force a fresh fetch to ensure header sync
+                    }
                     closeMealModal();
                     // Optional: Show a small toast notification
                 }
@@ -660,5 +663,4 @@ if ($categoryId === '') {
                 closeMealModal();
             }
         });
-    });
 </script>

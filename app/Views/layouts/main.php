@@ -304,12 +304,15 @@ $isLoggedIn = isset($_SESSION['user_id']);
         }
 
         // Cart Badge Logic
-        async function updateCartBadge() {
+        async function updateCartBadge(providedData = null) {
             try {
-                const response = await fetch('<?php echo url('/cart/status'); ?>', {
-                    headers: { 'X-Requested-With': 'XMLHttpRequest' }
-                });
-                const data = await response.json();
+                let data = providedData;
+                if (!data) {
+                    const response = await fetch('<?php echo url('/cart/status'); ?>', {
+                        headers: { 'X-Requested-With': 'XMLHttpRequest' }
+                    });
+                    data = await response.json();
+                }
                 
                 const badges = [
                     document.getElementById('cart-badge-desktop'),
@@ -319,8 +322,16 @@ $isLoggedIn = isset($_SESSION['user_id']);
                 badges.forEach(badge => {
                     if (badge) {
                         if (data.cartCount > 0) {
+                            const oldCount = badge.textContent;
                             badge.textContent = data.cartCount > 99 ? '99+' : data.cartCount;
                             badge.classList.remove('hidden');
+                            
+                            // Re-trigger animation if count changed
+                            if (oldCount !== badge.textContent) {
+                                badge.style.animation = 'none';
+                                badge.offsetHeight; // trigger reflow
+                                badge.style.animation = '';
+                            }
                         } else {
                             badge.classList.add('hidden');
                         }

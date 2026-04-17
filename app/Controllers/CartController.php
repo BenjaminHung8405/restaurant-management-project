@@ -149,6 +149,9 @@ class CartController extends BaseController
                 }
             }
         }
+        if ($this->isAjax()) {
+            return $this->json($this->getCartStatus());
+        }
         $this->redirectBack();
     }
 
@@ -169,6 +172,9 @@ class CartController extends BaseController
                     break;
                 }
             }
+        }
+        if ($this->isAjax()) {
+            return $this->json($this->getCartStatus());
         }
         $this->redirectBack();
     }
