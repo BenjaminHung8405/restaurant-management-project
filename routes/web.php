@@ -42,6 +42,7 @@ return function (Router $router) {
     $router->get('/cart/status_bar', array(CartController::class, 'statusBar'));
     $router->get('/cart/remove', array(CartController::class, 'remove'));
     $router->get('/cart/update', array(CartController::class, 'update'));
+    $router->get('/cart/set-table', array(CartController::class, 'setTable'));
     $router->post('/cart/place-order', array(CartController::class, 'placeOrder'));
     
     // Reservation Routes

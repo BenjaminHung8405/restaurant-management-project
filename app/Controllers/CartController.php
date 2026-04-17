@@ -37,11 +37,29 @@ class CartController extends BaseController
             }
         }
 
+        $tableModel = new Table();
+        $tables = $tableModel->getAllAvailable();
+        $currentTableId = isset($_SESSION['table_id']) ? $_SESSION['table_id'] : null;
+
         $this->render('cart/index', array(
             'title' => 'Giỏ hàng',
             'cartItems' => $cartItems,
-            'total' => $total
+            'total' => $total,
+            'tables' => $tables,
+            'currentTableId' => $currentTableId
         ));
+    }
+
+    public function setTable()
+    {
+        $tableId = isset($_GET['table_id']) ? trim((string) $_GET['table_id']) : '';
+        
+        if ($tableId !== '') {
+            $_SESSION['table_id'] = $tableId;
+            return $this->json(array('success' => true, 'table_id' => $tableId));
+        }
+        
+        return $this->json(array('success' => false, 'message' => 'Invalid table ID'));
     }
 
     public function add()

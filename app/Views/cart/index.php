@@ -118,31 +118,48 @@
                             </h2>
 
                             <!-- Table Validation Banner -->
-                            <?php if (empty($_SESSION['table_id'])): ?>
-                                <div class="mb-6 p-4 bg-orange-50 border-2 border-orange-200 rounded-2xl flex gap-3 animate-pulse">
-                                    <div class="flex-shrink-0 text-orange-600">
-                                        <i data-lucide="qr-code" class="w-6 h-6"></i>
+                            <!-- Table Selection -->
+                            <div class="mb-8 p-6 bg-neutral-50 rounded-[2rem] border border-neutral-100">
+                                <div class="flex items-center gap-3 mb-4">
+                                    <div class="w-10 h-10 rounded-xl bg-primary-100 text-primary-600 flex items-center justify-center shadow-sm">
+                                        <i data-lucide="map-pin" class="w-5 h-5"></i>
                                     </div>
                                     <div>
-                                        <p class="text-sm font-bold text-orange-900">
-                                            Vui lòng quét mã QR tại bàn
-                                        </p>
-                                        <p class="text-[11px] text-orange-700 mt-0.5 leading-tight">
-                                            Chúng tôi sẽ tự động nhận diện bàn của bạn để phục vụ chính xác nhất.
-                                        </p>
+                                        <h3 class="text-sm font-bold text-neutral-900 leading-none">Vị trí của bạn</h3>
+                                        <p class="text-[10px] text-neutral-400 font-bold uppercase tracking-wider mt-1">Chọn bàn để phục vụ</p>
                                     </div>
                                 </div>
-                            <?php else: ?>
-                                <div class="mb-6 p-4 bg-emerald-50 border border-emerald-200 rounded-2xl flex items-center gap-3">
-                                    <div class="w-8 h-8 rounded-full bg-emerald-100 text-emerald-600 flex items-center justify-center flex-shrink-0">
-                                        <i data-lucide="check" class="w-5 h-5"></i>
-                                    </div>
-                                    <div>
-                                        <p class="text-xs text-emerald-700 font-bold uppercase tracking-wider">Bàn của bạn đã sẵn sàng</p>
-                                        <p class="text-[10px] text-emerald-600 mt-0.5 opacity-80 italic">(Hệ thống đã nhận diện được vị trí)</p>
+
+                                <div class="relative group">
+                                    <select 
+                                        id="table-selector"
+                                        onchange="selectTable(this.value)"
+                                        class="w-full bg-white border border-neutral-200 rounded-xl py-3.5 px-4 text-sm font-bold text-neutral-700 appearance-none focus:outline-none focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500 transition-all cursor-pointer shadow-sm group-hover:border-primary-300"
+                                    >
+                                        <option value="" disabled <?php echo empty($currentTableId) ? 'selected' : ''; ?>>-- Chọn bàn của bạn --</option>
+                                        <?php if (!empty($tables)): ?>
+                                            <?php foreach ($tables as $table): ?>
+                                                <option 
+                                                    value="<?php echo htmlspecialchars((string) $table['id'], ENT_QUOTES, 'UTF-8'); ?>" 
+                                                    <?php echo $currentTableId == $table['id'] ? 'selected' : ''; ?>
+                                                >
+                                                    Bàn số <?php echo htmlspecialchars((string) $table['table_number'], ENT_QUOTES, 'UTF-8'); ?> (<?php echo (int) $table['capacity']; ?> người)
+                                                </option>
+                                            <?php endforeach; ?>
+                                        <?php endif; ?>
+                                    </select>
+                                    <div class="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none text-neutral-400 transition-colors group-hover:text-primary-500">
+                                        <i data-lucide="chevron-down" class="w-4 h-4"></i>
                                     </div>
                                 </div>
-                            <?php endif; ?>
+
+                                <?php if (empty($currentTableId)): ?>
+                                    <div id="table-warning" class="mt-3 flex gap-2 items-start text-orange-600 animate-pulse">
+                                        <i data-lucide="alert-circle" class="w-3.5 h-3.5 mt-0.5"></i>
+                                        <p class="text-[10px] font-bold leading-tight">Vui lòng chọn bàn hoặc quét mã QR trước khi đặt món.</p>
+                                    </div>
+                                <?php endif; ?>
+                            </div>
 
                             <!-- Order items count -->
                             <div class="flex flex-col gap-4 mb-6">
@@ -166,7 +183,7 @@
                             </div>
 
                             <!-- CTA Button -->
-                            <form action="<?php echo url('/cart/place-order'); ?>" method="POST">
+                            <form action="<?php echo url('/cart/place-order'); ?>" method="POST" onsubmit="return validateOrderForm()">
                                 <button
                                     type="submit"
                                     class="flex items-center justify-center gap-3 w-full py-5 rounded-2xl font-black text-lg shadow-xl transition-all duration-300 transform active:scale-95 bg-primary-500 text-white hover:bg-primary-600 shadow-primary-500/20 cursor-pointer"
@@ -305,6 +322,56 @@
         if (typeof window.updateCartUI === 'function') {
             window.updateCartUI();
         }
+    }
+
+    async function selectTable(tableId) {
+        if (!tableId) return;
+
+        const selector = document.getElementById('table-selector');
+        selector.disabled = true;
+        selector.classList.add('opacity-50');
+
+        try {
+            const response = await fetch(`<?php echo url('/cart/set-table'); ?>?table_id=${tableId}`, {
+                headers: { 'X-Requested-With': 'XMLHttpRequest' }
+            });
+            const data = await response.json();
+            
+            if (data.success) {
+                // Remove warning if exists
+                const warning = document.getElementById('table-warning');
+                if (warning) warning.remove();
+                
+                // Success feedback - pulse the selection
+                selector.parentElement.classList.add('animate-pulse', 'scale-[1.02]');
+                setTimeout(() => {
+                    selector.parentElement.classList.remove('animate-pulse', 'scale-[1.02]');
+                }, 500);
+            }
+        } catch (err) {
+            console.error('Failed to set table:', err);
+        } finally {
+            selector.disabled = false;
+            selector.classList.remove('opacity-50');
+        }
+    }
+
+    function validateOrderForm() {
+        const tableId = document.getElementById('table-selector').value;
+        if (!tableId) {
+            // Visual feedback for importance
+            const selector = document.getElementById('table-selector');
+            selector.focus();
+            selector.classList.add('border-red-500', 'ring-4', 'ring-red-500/10');
+            setTimeout(() => {
+                selector.classList.remove('border-red-500', 'ring-4', 'ring-red-500/10');
+            }, 2000);
+
+            // Alert for user
+            alert('Vui lòng chọn bàn của bạn trước khi gửi yêu cầu đến bếp!');
+            return false;
+        }
+        return true;
     }
 </script>
 </div>
