@@ -140,6 +140,7 @@
                             name="price"
                             type="number"
                             step="1000"
+                            min="0"
                             value="<?php echo (float)($item->price ?? 0); ?>"
                             class="w-full rounded-2xl border border-slate-200 px-5 py-4 pr-16 outline-none focus:ring-4 focus:ring-primary-100 focus:border-primary-500 transition-all font-black text-primary-700 text-lg placeholder:text-slate-200"
                             placeholder="0"
@@ -148,6 +149,7 @@
                         >
                         <span class="absolute right-5 top-1/2 -translate-y-1/2 text-[11px] font-black text-slate-400 uppercase tracking-widest border-l border-slate-100 pl-4 py-1">VND</span>
                     </div>
+                    <p class="mt-2 text-[11px] font-medium text-slate-400">Giá món ăn phải lớn hơn hoặc bằng 0.</p>
                 </div>
 
                 <div>
@@ -206,6 +208,7 @@
     const imageInput = document.getElementById('imageInput');
     const preview = document.getElementById('preview');
     const placeholder = document.getElementById('placeholder');
+    const priceInput = document.getElementById('price');
 
     imageInput.addEventListener('change', function() {
         const file = this.files[0];
@@ -222,4 +225,24 @@
             reader.readAsDataURL(file);
         }
     });
+
+    if (priceInput) {
+        priceInput.addEventListener('invalid', function() {
+            if (this.validity.valueMissing) {
+                this.setCustomValidity('Vui lòng nhập giá món ăn.');
+            } else if (this.validity.badInput || this.validity.typeMismatch) {
+                this.setCustomValidity('Giá món ăn phải là số hợp lệ.');
+            } else if (this.validity.rangeUnderflow) {
+                this.setCustomValidity('Giá món ăn không được âm.');
+            } else if (this.validity.stepMismatch) {
+                this.setCustomValidity('Giá món ăn phải theo bội số 1.000 VND.');
+            } else {
+                this.setCustomValidity('Giá món ăn không hợp lệ.');
+            }
+        });
+
+        priceInput.addEventListener('input', function() {
+            this.setCustomValidity('');
+        });
+    }
 </script>

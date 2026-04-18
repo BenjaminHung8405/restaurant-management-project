@@ -222,9 +222,10 @@ class AdminMenuController extends AdminBaseController
         }
 
         // Price validation
-        $price = $this->parsePrice($data['price']);
+        $priceError = null;
+        $price = $this->parsePrice($data['price'], 0, 1000000000, $priceError);
         if ($price === false) {
-            $errors[] = 'Giá món ăn phải là một con số.';
+            $errors[] = $priceError ?: 'Giá món ăn không hợp lệ.';
         } else {
             $data['price'] = $price;
         }

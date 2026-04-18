@@ -64,7 +64,7 @@ CREATE TABLE menu_items (
   category_id CHAR(36) NOT NULL COMMENT 'Foreign key to categories table',
   name VARCHAR(255) NOT NULL COMMENT 'Menu item name',
   description TEXT COMMENT 'Item description and ingredients, optional',
-  price DECIMAL(10, 2) NOT NULL COMMENT 'Item price',
+  price DECIMAL(10, 2) UNSIGNED NOT NULL COMMENT 'Item price (must be >= 0)',
   image_url VARCHAR(500) COMMENT 'URL to item image, optional',
   area VARCHAR(100) COMMENT 'Area/location code, optional',
   is_available BOOLEAN NOT NULL DEFAULT TRUE COMMENT 'Availability status',

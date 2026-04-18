@@ -74,15 +74,31 @@ class BaseController
         return $number;
     }
 
-    protected function parsePrice($value, $min = 0.01, $max = 1000000000)
+    protected function parsePrice($value, $min = 0, $max = 1000000000, &$errorMessage = null)
     {
         $normalized = str_replace(',', '.', trim((string) $value));
-        if ($normalized === '' || !is_numeric($normalized)) {
+        if ($normalized === '') {
+            $errorMessage = 'Vui lòng nhập giá món ăn.';
+            return false;
+        }
+
+        if (!is_numeric($normalized)) {
+            $errorMessage = 'Giá món ăn phải là số hợp lệ.';
             return false;
         }
 
         $price = (float) $normalized;
-        if ($price < $min || $price > $max) {
+        if ($price < $min) {
+            if ((float) $min === 0.0) {
+                $errorMessage = 'Giá món ăn không được âm.';
+            } else {
+                $errorMessage = 'Giá món ăn phải lớn hơn hoặc bằng ' . rtrim(rtrim(number_format((float) $min, 2, '.', ''), '0'), '.') . '.';
+            }
+            return false;
+        }
+
+        if ($price > $max) {
+            $errorMessage = 'Giá món ăn vượt quá giới hạn cho phép.';
             return false;
         }
 
