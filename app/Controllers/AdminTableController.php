@@ -3,11 +3,19 @@
 namespace App\Controllers;
 
 use App\Core\Database;
+use App\Models\Table;
 use PDO;
 use Throwable;
 
 class AdminTableController extends AdminBaseController
 {
+    protected $tableModel;
+
+    public function __construct()
+    {
+        parent::__construct();
+        $this->tableModel = new Table();
+    }
     /**
      * Display the Interactive Table Map
      */
@@ -63,6 +71,9 @@ class AdminTableController extends AdminBaseController
         header('Content-Type: application/json');
 
         try {
+            // Priority 4 (UX): Auto-release Ghost Cleaning Tables
+            $this->tableModel->autoReleaseCleaningTables();
+
             $db = Database::connection();
             
             // SQL updated to include reservation status and table status

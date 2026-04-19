@@ -42,4 +42,19 @@ class Table extends BaseModel
             'id' => $id
         ]);
     }
+
+    /**
+     * Priority 4 (UX): Auto-release Ghost Cleaning Tables
+     * If a table has been in 'cleaning' status for more than 15 minutes,
+     * automatically mark it as 'available'.
+     */
+    public function autoReleaseCleaningTables()
+    {
+        $sql = "UPDATE {$this->table} 
+                SET status = 'available' 
+                WHERE status = 'cleaning' 
+                AND updated_at < DATE_SUB(NOW(), INTERVAL 15 MINUTE)";
+        $statement = $this->db->prepare($sql);
+        return $statement->execute();
+    }
 }
