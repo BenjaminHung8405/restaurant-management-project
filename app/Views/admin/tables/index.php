@@ -10,6 +10,10 @@
                 <div class="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></div>
                 <span>Tự động cập nhật...</span>
             </div>
+            <button onclick="openAddTableModal()" class="flex items-center gap-2 px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-black uppercase tracking-widest rounded-xl transition-all active:scale-95 shadow-lg shadow-indigo-100">
+                <i data-lucide="plus-circle" class="w-4 h-4"></i>
+                Thêm bàn
+            </button>
             <button onclick="fetchTableStatus()" class="p-2 bg-white border border-slate-200 rounded-lg text-slate-600 hover:text-primary-600 hover:border-primary-200 hover:bg-primary-50 transition-all active:scale-95 shadow-sm" title="Làm mới ngay">
                 <i data-lucide="refresh-cw" class="w-5 h-5"></i>
             </button>
@@ -179,10 +183,41 @@
     </div>
 </div>
 
+<div id="add-table-modal" class="fixed inset-0 z-[2001] hidden items-center justify-center p-4">
+    <div class="absolute inset-0 bg-slate-900/60 backdrop-blur-md" onclick="closeAddTableModal()"></div>
+    <div class="relative bg-white rounded-[3rem] shadow-2xl w-full max-w-md overflow-hidden transition-all duration-300 scale-95 opacity-0">
+        <form id="form-add-table" onsubmit="saveNewTable(event)" class="p-10">
+            <div class="w-20 h-20 bg-indigo-50 text-indigo-500 rounded-full flex items-center justify-center mx-auto mb-8 shadow-inner">
+                <i data-lucide="layout-grid" class="w-10 h-10"></i>
+            </div>
+            <h3 class="text-3xl font-black text-slate-900 mb-2 text-center">Thêm bàn mới</h3>
+            <p class="text-slate-400 text-xs font-bold uppercase tracking-widest mb-10 text-center">Thiết lập thông số bàn</p>
+            
+            <div class="space-y-6 mb-10">
+                <div class="space-y-2">
+                    <label class="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Số hiệu bàn</label>
+                    <input type="text" name="table_number" required placeholder="Ví dụ: T1-11, VIP-05..." 
+                        class="w-full px-6 py-4 bg-slate-50 border border-slate-100 rounded-2xl text-sm font-bold focus:ring-4 focus:ring-indigo-100 focus:border-indigo-300 outline-none transition-all">
+                </div>
+                <div class="space-y-2">
+                    <label class="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Sức chứa (Người)</label>
+                    <input type="number" name="capacity" required min="1" value="4" 
+                        class="w-full px-6 py-4 bg-slate-50 border border-slate-100 rounded-2xl text-sm font-bold focus:ring-4 focus:ring-indigo-100 focus:border-indigo-300 outline-none transition-all">
+                </div>
+            </div>
+
+            <div class="grid grid-cols-2 gap-4">
+                <button type="button" onclick="closeAddTableModal()" class="py-5 bg-slate-100 text-slate-500 rounded-3xl font-black text-xs uppercase tracking-widest hover:bg-slate-200 transition-all active:scale-95">Hủy bỏ</button>
+                <button type="submit" id="btn-submit-add-table" class="py-5 bg-indigo-600 text-white rounded-3xl font-black text-xs uppercase tracking-widest hover:bg-indigo-700 transition-all shadow-xl shadow-indigo-100 active:scale-95">Lưu bàn</button>
+            </div>
+        </form>
+    </div>
+</div>
+
 <script>
     // Teleport Logic: Move POS and Modals to document.body to escape transform/z-index issues
     window.addEventListener('DOMContentLoaded', () => {
-        const items = ['pos-panel', 'reserve-modal', 'cleaning-modal'];
+        const items = ['pos-panel', 'reserve-modal', 'cleaning-modal', 'add-table-modal'];
         items.forEach(id => {
             const el = document.getElementById(id);
             if (el) document.body.appendChild(el);
@@ -490,8 +525,8 @@
                             <i data-lucide="minus" class="w-3.5 h-3.5"></i>
                         </button>
                         <span class="w-8 text-center text-xs font-black text-slate-800 tabular-nums">${item.quantity}</span>
-                        <button onclick="updateQuantity('${item.id}', 1)" 
-                            class="w-8 h-8 flex items-center justify-center bg-white rounded-xl text-slate-400 hover:text-emerald-500 shadow-sm transition-all active:scale-90 active:scale-90">
+                        <button onclick="updateQuantity('${item.id}', 1)" ${isLocked ? 'disabled' : ''} 
+                            class="w-8 h-8 flex items-center justify-center bg-white rounded-xl text-slate-400 hover:text-emerald-500 shadow-sm transition-all active:scale-90 disabled:opacity-30 disabled:pointer-events-none">
                             <i data-lucide="plus" class="w-3.5 h-3.5"></i>
                         </button>
                     </div>
@@ -637,6 +672,60 @@
             content.classList.remove('scale-95', 'opacity-0');
             content.classList.add('scale-100', 'opacity-100');
         }, 10);
+    }
+
+    function openAddTableModal() {
+        showModal('add-table-modal');
+    }
+
+    function closeAddTableModal() {
+        const modal = document.getElementById('add-table-modal');
+        const content = modal.querySelector('div:not(.absolute)');
+        content.classList.add('scale-95', 'opacity-0');
+        setTimeout(() => {
+            modal.classList.add('hidden');
+            modal.classList.remove('flex');
+            // Reset form when closing
+            document.getElementById('form-add-table').reset();
+        }, 300);
+    }
+
+    async function saveNewTable(event) {
+        event.preventDefault();
+        
+        const form = event.target;
+        const btn = document.getElementById('btn-submit-add-table');
+        const formData = new FormData(form);
+        const data = Object.fromEntries(formData.entries());
+
+        // UX: Anti-spam (Disable button)
+        btn.disabled = true;
+        const oldText = btn.innerText;
+        btn.innerText = 'Đang lưu...';
+
+        try {
+            const res = await fetch('<?= url('/admin/tables/api/store') ?>', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(data)
+            });
+
+            const result = await res.json();
+
+            if (result.success) {
+                showToast(result.message);
+                closeAddTableModal();
+                fetchTableStatus(); // Refresh the grid
+            } else {
+                showToast(result.message || 'Có lỗi xảy ra', 'error');
+            }
+        } catch (e) {
+            showToast('Lỗi kết nối hệ thống', 'error');
+        } finally {
+            // Restore button
+            btn.disabled = false;
+            btn.innerText = oldText;
+        }
     }
 
     function closeModals() {

@@ -88,6 +88,7 @@ class KitchenController extends AdminBaseController
 
         try {
             $db = \App\Core\Database::connection();
+            $db->beginTransaction();
             
             // Update item status to 'cooking' ONLY if it's currently 'pending'
             $sql = "UPDATE order_items SET status = 'cooking' WHERE id = :id AND status = 'pending'";
@@ -95,12 +96,15 @@ class KitchenController extends AdminBaseController
             $stmt->execute(['id' => $itemId]);
 
             if ($stmt->rowCount() > 0) {
+                $db->commit();
                 echo json_encode(['success' => true]);
             } else {
+                $db->rollBack();
                 http_response_code(404);
                 echo json_encode(['error' => 'Item not found or not in pending status.']);
             }
         } catch (\Throwable $e) {
+            if ($db->inTransaction()) $db->rollBack();
             http_response_code(500);
             echo json_encode(['error' => $e->getMessage()]);
         }
@@ -122,6 +126,7 @@ class KitchenController extends AdminBaseController
 
         try {
             $db = Database::connection();
+            $db->beginTransaction();
             
             // 1. Get order_id before updating
             $sqlGetOrder = "SELECT order_id FROM order_items WHERE id = :id";
@@ -130,6 +135,7 @@ class KitchenController extends AdminBaseController
             $orderItem = $stmtGetOrder->fetch(PDO::FETCH_ASSOC);
 
             if (!$orderItem) {
+                $db->rollBack();
                 http_response_code(404);
                 echo json_encode(['error' => 'Order item not found.']);
                 return;
@@ -157,6 +163,7 @@ class KitchenController extends AdminBaseController
                 $orderUpdated = true;
             }
 
+            $db->commit();
             echo json_encode([
                 'success' => true,
                 'order_id' => $orderId,
@@ -165,6 +172,7 @@ class KitchenController extends AdminBaseController
             ]);
 
         } catch (Throwable $e) {
+            if ($db->inTransaction()) $db->rollBack();
             http_response_code(500);
             echo json_encode(['error' => $e->getMessage()]);
         }

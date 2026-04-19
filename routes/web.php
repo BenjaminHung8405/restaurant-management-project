@@ -58,6 +58,7 @@ return function (Router $router) {
     // Admin Table Map
     $router->get('/admin/tables', array(\App\Controllers\AdminTableController::class, 'index'));
     $router->get('/admin/tables/api/status', array(\App\Controllers\AdminTableController::class, 'getTablesAjax'));
+    $router->post('/admin/tables/api/store', array(\App\Controllers\AdminTableController::class, 'store'));
     $router->post('/admin/api/tables/clean', array(AdminPosController::class, 'cleanTable'));
 
     // POS APIs

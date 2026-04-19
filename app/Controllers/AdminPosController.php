@@ -116,7 +116,7 @@ class AdminPosController extends AdminBaseController
                 $orderId = $this->uuid();
                 $orderModel->create([
                     'id' => $orderId,
-                    'user_id' => $_SESSION['user']['id'] ?? null,
+                    'user_id' => $_SESSION['user_id'] ?? ($_SESSION['user']['id'] ?? null),
                     'table_id' => $tableId,
                     'total_amount' => 0, // Will be set by syncOrderItems
                     'order_status' => 'preparing',

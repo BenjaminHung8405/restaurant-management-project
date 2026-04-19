@@ -57,4 +57,31 @@ class Table extends BaseModel
         $statement = $this->db->prepare($sql);
         return $statement->execute();
     }
+
+    /**
+     * Check if a table number already exists.
+     */
+    public function existsByNumber($tableNumber)
+    {
+        $sql = "SELECT COUNT(*) FROM {$this->table} WHERE table_number = :table_number";
+        $statement = $this->db->prepare($sql);
+        $statement->execute(['table_number' => $tableNumber]);
+        return $statement->fetchColumn() > 0;
+    }
+
+    /**
+     * Create a new table.
+     */
+    public function store($data)
+    {
+        $sql = "INSERT INTO {$this->table} (id, table_number, capacity, status) 
+                VALUES (:id, :table_number, :capacity, :status)";
+        $statement = $this->db->prepare($sql);
+        return $statement->execute([
+            'id' => $data['id'],
+            'table_number' => $data['table_number'],
+            'capacity' => $data['capacity'],
+            'status' => $data['status'] ?? 'available'
+        ]);
+    }
 }

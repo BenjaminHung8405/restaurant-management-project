@@ -110,4 +110,63 @@ class AdminTableController extends AdminBaseController
             echo json_encode(['error' => $e->getMessage()]);
         }
     }
+
+    /**
+     * Store a new table via AJAX
+     */
+    public function store()
+    {
+        header('Content-Type: application/json');
+
+        try {
+            // Get JSON input
+            $input = json_decode(file_get_contents('php://input'), true);
+            
+            $tableNumber = trim($input['table_number'] ?? '');
+            $capacity = intval($input['capacity'] ?? 0);
+
+            // Validation
+            if (empty($tableNumber)) {
+                http_response_code(400);
+                echo json_encode(['success' => false, 'message' => 'Số bàn không được để trống.']);
+                return;
+            }
+
+            if ($capacity <= 0) {
+                http_response_code(400);
+                echo json_encode(['success' => false, 'message' => 'Sức chứa phải lớn hơn 0.']);
+                return;
+            }
+
+            // Check duplicate
+            if ($this->tableModel->existsByNumber($tableNumber)) {
+                http_response_code(400);
+                echo json_encode(['success' => false, 'message' => 'Số bàn này đã tồn tại trong hệ thống.']);
+                return;
+            }
+
+            // Create new table
+            $newTableId = generate_uuid();
+            $success = $this->tableModel->store([
+                'id' => $newTableId,
+                'table_number' => $tableNumber,
+                'capacity' => $capacity,
+                'status' => 'available'
+            ]);
+
+            if ($success) {
+                echo json_encode([
+                    'success' => true,
+                    'message' => 'Thêm bàn mới thành công!',
+                    'table_id' => $newTableId
+                ]);
+            } else {
+                throw new \Exception('Không thể lưu thông tin bàn vào cơ sở dữ liệu.');
+            }
+
+        } catch (Throwable $e) {
+            http_response_code(500);
+            echo json_encode(['success' => false, 'message' => 'Lỗi hệ thống: ' . $e->getMessage()]);
+        }
+    }
 }
