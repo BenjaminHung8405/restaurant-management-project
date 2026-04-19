@@ -30,51 +30,26 @@ class Reservation extends BaseModel
         return $statement->execute($data);
     }
 
-    public function getByTableIdAndTime($tableId, $time)
+    public function getAllWithDetails($limitToCurrentAndFuture = true)
     {
-        $sql = 'SELECT * FROM ' . $this->table . ' WHERE table_id = :table_id AND reservation_time = :time LIMIT 1';
-        $statement = $this->db->prepare($sql);
-        $statement->execute(array('table_id' => $tableId, 'time' => $time));
-        return $statement->fetch();
-    }
+        $whereClause = '';
+        if ($limitToCurrentAndFuture) {
+            $whereClause = ' WHERE DATE(r.reservation_time) >= CURDATE() ';
+        }
 
-    public function getStats()
-    {
-        $stats = array();
-        
-        $stats['total'] = (int) $this->db->query('SELECT COUNT(*) FROM reservations')->fetchColumn();
-        
-        $sqlPendingToday = 'SELECT COUNT(*) FROM reservations WHERE status = "pending" AND DATE(reservation_time) = CURDATE()';
-        $stats['pending_today'] = (int) $this->db->query($sqlPendingToday)->fetchColumn();
-        
-        $sqlCompleted = 'SELECT COUNT(*) FROM reservations WHERE status = "completed"';
-        $stats['completed'] = (int) $this->db->query($sqlCompleted)->fetchColumn();
-        
-        return $stats;
-    }
-
-    public function getAllWithDetails()
-    {
         $sql = '
             SELECT
                 r.*,
-                t.table_number,
-                o.id AS order_id,
-                o.total_amount AS order_total,
-                o.order_status,
-                o.payment_status
+                t.table_number
             FROM reservations r
             LEFT JOIN tables t ON t.id = r.table_id
-            LEFT JOIN (
-                SELECT o1.id, o1.table_id, o1.total_amount, o1.order_status, o1.payment_status, o1.created_at
-                FROM orders o1
-                INNER JOIN (
-                    SELECT table_id, MAX(created_at) AS latest_created_at
-                    FROM orders
-                    GROUP BY table_id
-                ) latest ON latest.table_id = o1.table_id AND latest.latest_created_at = o1.created_at
-            ) o ON o.table_id = r.table_id
-            ORDER BY r.created_at DESC
+            ' . $whereClause . '
+            ORDER BY 
+                CASE 
+                    WHEN r.status IN ("pending", "confirmed") THEN 1 
+                    ELSE 2 
+                END,
+                r.reservation_time ASC
         ';
         return $this->db->query($sql)->fetchAll();
     }
@@ -84,5 +59,12 @@ class Reservation extends BaseModel
         $sql = 'UPDATE ' . $this->table . ' SET status = :status, updated_at = NOW() WHERE id = :id';
         $statement = $this->db->prepare($sql);
         return $statement->execute(array('status' => $status, 'id' => $id));
+    }
+
+    public function delete($id)
+    {
+        $sql = 'DELETE FROM ' . $this->table . ' WHERE id = :id';
+        $statement = $this->db->prepare($sql);
+        return $statement->execute(array('id' => $id));
     }
 }

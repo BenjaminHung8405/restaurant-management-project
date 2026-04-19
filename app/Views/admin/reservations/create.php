@@ -1,188 +1,149 @@
-<div class="space-y-6">
-    <!-- Header -->
-    <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-        <div>
-            <nav class="flex text-sm text-slate-500 mb-1" aria-label="Breadcrumb">
-                <ol class="flex items-center space-x-2">
-                    <li><a href="<?php echo url('/admin'); ?>" class="hover:text-primary-600 transition-colors">Admin</a></li>
-                    <li class="flex items-center space-x-2">
-                        <i data-lucide="chevron-right" class="w-4 h-4"></i>
-                        <span class="text-slate-900 font-medium">Tạo Đặt bàn mới</span>
-                    </li>
-                </ol>
-            </nav>
-            <h1 class="text-2xl font-bold text-slate-900">Tạo Đặt bàn mới</h1>
-            <p class="text-slate-500 mt-1">Dành cho khách hàng vãng lai hoặc đặt qua điện thoại.</p>
-        </div>
-        
-        <div class="flex items-center gap-3">
-            <a href="<?php echo url('/admin/orders'); ?>" class="inline-flex items-center gap-2 px-4 py-2 text-sm font-semibold text-slate-600 bg-white border border-slate-200 rounded-xl hover:bg-slate-50 transition-all shadow-sm">
-                <i data-lucide="arrow-left" class="w-4 h-4"></i>
-                Hủy & Quay lại
-            </a>
-        </div>
+<div class="p-6 max-w-4xl mx-auto">
+    <div class="mb-8">
+        <a href="<?php echo url('/admin/reservations'); ?>" class="inline-flex items-center gap-2 text-sm font-medium text-slate-500 hover:text-primary-600 transition-colors mb-4">
+            <i data-lucide="arrow-left" class="w-4 h-4"></i>
+            Quay lại danh sách
+        </a>
+        <h1 class="text-2xl font-bold text-slate-900"><?php echo $title; ?></h1>
+        <p class="text-slate-500 text-sm mt-1">Điền đầy đủ thông tin bên dưới để tạo một phiếu đặt bàn mới.</p>
     </div>
 
-    <!-- Error Messages -->
     <?php if (!empty($errors)): ?>
-        <div class="bg-red-50 border-l-4 border-red-500 p-4 rounded-xl shadow-sm animate-shake">
-            <div class="flex items-start">
-                <div class="flex-shrink-0">
-                    <i data-lucide="alert-circle" class="w-5 h-5 text-red-500"></i>
-                </div>
-                <div class="ml-3">
-                    <h3 class="text-sm font-bold text-red-800">Đã xảy ra lỗi:</h3>
-                    <ul class="mt-1 text-sm text-red-700 list-disc list-inside space-y-0.5">
-                        <?php foreach ($errors as $error): ?>
-                            <li><?php echo htmlspecialchars($error, ENT_QUOTES, 'UTF-8'); ?></li>
-                        <?php endforeach; ?>
-                    </ul>
-                </div>
+        <div class="mb-6 p-4 bg-red-50 border border-red-200 text-red-700 rounded-xl">
+            <div class="flex items-center gap-2 mb-2">
+                <i data-lucide="alert-circle" class="w-5 h-5 text-red-500"></i>
+                <span class="font-bold">Vui lòng kiểm tra lại:</span>
             </div>
+            <ul class="list-disc list-inside text-sm space-y-1 ml-2">
+                <?php foreach ($errors as $error): ?>
+                    <li><?php echo $error; ?></li>
+                <?php endforeach; ?>
+            </ul>
         </div>
     <?php endif; ?>
 
-    <!-- Form Section -->
-    <div class="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
-        <form action="<?php echo url('/admin/reservations/store'); ?>" method="POST" class="p-6 md:p-8">
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-6">
-                
-                <!-- Left Column: Customer Details -->
-                <div class="space-y-6">
-                    <div class="flex items-center gap-2 pb-2 border-b border-slate-100">
-                        <i data-lucide="user" class="w-5 h-5 text-primary-500"></i>
-                        <h2 class="font-bold text-slate-900">Thông tin khách hàng</h2>
-                    </div>
-                    
-                    <div class="space-y-4">
-                        <div class="group">
-                            <label for="guest_name" class="block text-sm font-semibold text-slate-700 mb-1.5 group-focus-within:text-primary-600 transition-colors">Tên khách hàng *</label>
-                            <input type="text" id="guest_name" name="guest_name" required
-                                   value="<?php echo htmlspecialchars($formData['guest_name'] ?? '', ENT_QUOTES, 'UTF-8'); ?>"
-                                   class="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-4 focus:ring-primary-100 focus:border-primary-500 transition-all outline-none placeholder:text-slate-400"
-                                   placeholder="Nhập họ và tên khách hàng">
-                        </div>
-
-                        <div class="group">
-                            <label for="guest_phone" class="block text-sm font-semibold text-slate-700 mb-1.5 group-focus-within:text-primary-600 transition-colors">Số điện thoại *</label>
-                            <input type="tel" id="guest_phone" name="guest_phone" required
-                                   value="<?php echo htmlspecialchars($formData['guest_phone'] ?? '', ENT_QUOTES, 'UTF-8'); ?>"
-                                   class="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-4 focus:ring-primary-100 focus:border-primary-500 transition-all outline-none placeholder:text-slate-400"
-                                   placeholder="Ví dụ: 0912345678">
-                        </div>
+    <form action="<?php echo url('/admin/reservations/store'); ?>" method="POST" class="space-y-6">
+        <div class="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden p-6">
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <!-- Customer Name -->
+                <div class="space-y-2">
+                    <label for="customer_name" class="block text-sm font-bold text-slate-700">Tên khách hàng <span class="text-red-500">*</span></label>
+                    <div class="relative">
+                        <i data-lucide="user" class="absolute left-3 top-1/2 -translate-y-1/2 w-4.5 h-4.5 text-slate-400"></i>
+                        <input type="text" id="customer_name" name="customer_name" required
+                               value="<?php echo htmlspecialchars($formData['customer_name'] ?? ''); ?>"
+                               class="w-full pl-10 pr-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500 transition-all outline-none"
+                               placeholder="VD: Nguyễn Văn A">
                     </div>
                 </div>
 
-                <!-- Right Column: Reservation Details -->
-                <div class="space-y-6">
-                    <div class="flex items-center gap-2 pb-2 border-b border-slate-100">
-                        <i data-lucide="calendar" class="w-5 h-5 text-primary-500"></i>
-                        <h2 class="font-bold text-slate-900">Chi tiết đặt bàn</h2>
-                    </div>
-
-                    <div class="grid grid-cols-2 gap-4">
-                        <div class="group">
-                            <label for="reservation_date" class="block text-sm font-semibold text-slate-700 mb-1.5 group-focus-within:text-primary-600 transition-colors">Ngày *</label>
-                            <input type="date" id="reservation_date" name="reservation_date" required
-                                   min="<?php echo date('Y-m-d'); ?>"
-                                   value="<?php echo htmlspecialchars($formData['reservation_date'] ?? '', ENT_QUOTES, 'UTF-8'); ?>"
-                                   class="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-4 focus:ring-primary-100 focus:border-primary-500 transition-all outline-none">
-                        </div>
-                        <div class="group">
-                            <label for="reservation_time" class="block text-sm font-semibold text-slate-700 mb-1.5 group-focus-within:text-primary-600 transition-colors">Giờ *</label>
-                            <input type="time" id="reservation_time" name="reservation_time" required
-                                   value="<?php echo htmlspecialchars($formData['reservation_time'] ?? '', ENT_QUOTES, 'UTF-8'); ?>"
-                                   class="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-4 focus:ring-primary-100 focus:border-primary-500 transition-all outline-none">
-                        </div>
-                    </div>
-
-                    <div class="grid grid-cols-2 gap-4">
-                        <div class="group">
-                            <label for="guest_count" class="block text-sm font-semibold text-slate-700 mb-1.5 group-focus-within:text-primary-600 transition-colors">Số khách *</label>
-                            <input type="number" id="guest_count" name="guest_count" required min="1"
-                                   value="<?php echo htmlspecialchars($formData['guest_count'] ?? '2', ENT_QUOTES, 'UTF-8'); ?>"
-                                   class="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-4 focus:ring-primary-100 focus:border-primary-500 transition-all outline-none">
-                        </div>
-                        <div class="group">
-                            <label for="table_id" class="block text-sm font-semibold text-slate-700 mb-1.5 group-focus-within:text-primary-600 transition-colors">Gán Bàn *</label>
-                            <select id="table_id" name="table_id" required
-                                    class="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-4 focus:ring-primary-100 focus:border-primary-500 transition-all outline-none appearance-none cursor-pointer">
-                                <option value="">-- Chọn bàn --</option>
-                                <?php foreach ($tables as $table): ?>
-                                    <option value="<?php echo $table['id']; ?>" 
-                                            data-capacity="<?php echo $table['capacity']; ?>"
-                                            <?php echo ($formData['table_id'] ?? '') === $table['id'] ? 'selected' : ''; ?>>
-                                        Bàn <?php echo htmlspecialchars($table['table_number'], ENT_QUOTES, 'UTF-8'); ?> (<?php echo $table['capacity']; ?> người)
-                                    </option>
-                                <?php endforeach; ?>
-                            </select>
-                        </div>
+                <!-- Customer Phone -->
+                <div class="space-y-2">
+                    <label for="customer_phone" class="block text-sm font-bold text-slate-700">Số điện thoại <span class="text-red-500">*</span></label>
+                    <div class="relative">
+                        <i data-lucide="phone" class="absolute left-3 top-1/2 -translate-y-1/2 w-4.5 h-4.5 text-slate-400"></i>
+                        <input type="tel" id="customer_phone" name="customer_phone" required
+                               value="<?php echo htmlspecialchars($formData['customer_phone'] ?? ''); ?>"
+                               class="w-full pl-10 pr-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500 transition-all outline-none"
+                               placeholder="VD: 0987654321">
                     </div>
                 </div>
 
-                <!-- Full Width: Notes -->
-                <div class="md:col-span-2 space-y-4 pt-4">
-                    <div class="group">
-                        <label for="notes" class="block text-sm font-semibold text-slate-700 mb-1.5 group-focus-within:text-primary-600 transition-colors">Ghi chú (Yêu cầu đặc biệt)</label>
-                        <textarea id="notes" name="notes" rows="4"
-                                  class="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-4 focus:ring-primary-100 focus:border-primary-500 transition-all outline-none placeholder:text-slate-400"
-                                  placeholder="Vị trí VIP, trang trí sinh nhật, dị ứng thức ăn..."><?php echo htmlspecialchars($formData['notes'] ?? '', ENT_QUOTES, 'UTF-8'); ?></textarea>
+                <!-- Reservation Time -->
+                <div class="space-y-2">
+                    <label for="reservation_time" class="block text-sm font-bold text-slate-700">Thời gian đặt bàn <span class="text-red-500">*</span></label>
+                    <div class="relative">
+                        <i data-lucide="calendar" class="absolute left-3 top-1/2 -translate-y-1/2 w-4.5 h-4.5 text-slate-400"></i>
+                        <input type="datetime-local" id="reservation_time" name="reservation_time" required
+                               value="<?php echo htmlspecialchars($formData['reservation_time'] ?? ''); ?>"
+                               class="w-full pl-10 pr-4 py-2.5 bg-slate-100 border border-slate-200 rounded-xl text-sm font-medium focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500 transition-all outline-none cursor-pointer">
+                    </div>
+                </div>
+
+                <!-- Party Size -->
+                <div class="space-y-2">
+                    <label for="party_size" class="block text-sm font-bold text-slate-700">Số lượng khách <span class="text-red-500">*</span></label>
+                    <div class="relative">
+                        <i data-lucide="users" class="absolute left-3 top-1/2 -translate-y-1/2 w-4.5 h-4.5 text-slate-400"></i>
+                        <input type="number" id="party_size" name="party_size" min="1" max="50" required
+                               value="<?php echo htmlspecialchars($formData['party_size'] ?? '2'); ?>"
+                               class="w-full pl-10 pr-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500 transition-all outline-none">
+                    </div>
+                </div>
+
+                <!-- Table Selection -->
+                <div class="space-y-2">
+                    <label for="table_id" class="block text-sm font-bold text-slate-700">Gán bàn <span class="text-red-500">*</span></label>
+                    <div class="relative">
+                        <i data-lucide="layout-grid" class="absolute left-3 top-1/2 -translate-y-1/2 w-4.5 h-4.5 text-slate-400"></i>
+                        <select id="table_id" name="table_id" required
+                                class="w-full pl-10 pr-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500 transition-all outline-none appearance-none">
+                            <option value="">-- Chọn bàn --</option>
+                            <?php foreach ($tables as $table): ?>
+                                <option value="<?php echo $table['id']; ?>" 
+                                        data-capacity="<?php echo $table['capacity']; ?>"
+                                        <?php echo (isset($formData['table_id']) && $formData['table_id'] == $table['id']) ? 'selected' : ''; ?>>
+                                    Bàn <?php echo $table['table_number']; ?> (Sức chứa: <?php echo $table['capacity']; ?>)
+                                </option>
+                            <?php endforeach; ?>
+                        </select>
+                        <i data-lucide="chevron-down" class="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 pointer-events-none"></i>
+                    </div>
+                </div>
+
+                <!-- Notes -->
+                <div class="md:col-span-2 space-y-2">
+                    <label for="notes" class="block text-sm font-bold text-slate-700">Ghi chú thêm</label>
+                    <div class="relative">
+                        <i data-lucide="message-square" class="absolute left-3 top-3 w-4.5 h-4.5 text-slate-400"></i>
+                        <textarea id="notes" name="notes" rows="3"
+                                  class="w-full pl-10 pr-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500 transition-all outline-none resize-none"
+                                  placeholder="Yêu cầu đặc biệt: Sinh nhật, ghế trẻ em..."><?php echo htmlspecialchars($formData['notes'] ?? ''); ?></textarea>
                     </div>
                 </div>
             </div>
+        </div>
 
-            <!-- Form Actions -->
-            <div class="mt-10 flex items-center justify-end gap-3 pt-6 border-t border-slate-100">
-                <a href="<?php echo url('/admin/orders'); ?>" class="px-6 py-3 text-sm font-bold text-slate-600 hover:text-slate-900 transition-all">Hủy bỏ</a>
-                <button type="submit" class="inline-flex items-center gap-2 px-8 py-3 bg-primary-600 text-white font-bold rounded-xl hover:bg-primary-700 hover:scale-[1.02] active:scale-[0.98] transition-all shadow-lg shadow-primary-200">
-                    <i data-lucide="check-circle" class="w-5 h-5"></i>
-                    Lưu Đặt bàn & Xác nhận
-                </button>
-            </div>
-        </form>
-    </div>
+        <div class="flex items-center justify-end gap-3">
+            <a href="<?php echo url('/admin/reservations'); ?>" class="px-6 py-2.5 text-sm font-bold text-slate-600 hover:bg-slate-100 rounded-xl transition-colors">
+                Hủy bỏ
+            </a>
+            <button type="submit" class="px-8 py-2.5 bg-primary-600 hover:bg-primary-700 text-white text-sm font-bold rounded-xl transition-all shadow-sm shadow-primary-200">
+                Lưu phiếu Đặt bàn
+            </button>
+        </div>
+    </form>
 </div>
 
 <script>
-    // Initialize icons if not already done
-    if (typeof lucide !== 'undefined') {
-        lucide.createIcons();
+document.addEventListener('DOMContentLoaded', function() {
+    const partySizeInput = document.getElementById('party_size');
+    const tableSelect = document.getElementById('table_id');
+    const tableOptions = Array.from(tableSelect.options).filter(opt => opt.value !== "");
+
+    function filterTables() {
+        const selectedSize = parseInt(partySizeInput.value) || 0;
+        let selectedFound = false;
+
+        tableOptions.forEach(option => {
+            const capacity = parseInt(option.getAttribute('data-capacity'));
+            if (capacity >= selectedSize) {
+                option.style.display = 'block';
+                option.disabled = false;
+                if (option.value === tableSelect.value) selectedFound = true;
+            } else {
+                option.style.display = 'none';
+                option.disabled = true;
+                if (option.value === tableSelect.value) {
+                    tableSelect.value = ""; // Reset if current selection is no longer valid
+                }
+            }
+        });
     }
 
-    // Dynamic Table Filtering by Capacity
-    document.addEventListener('DOMContentLoaded', function() {
-        const guestCountInput = document.getElementById('guest_count');
-        const tableSelect = document.getElementById('table_id');
-        const tableOptions = Array.from(tableSelect.querySelectorAll('option[data-capacity]'));
-
-        function filterTables() {
-            const count = parseInt(guestCountInput.value) || 0;
-            let availableCount = 0;
-            
-            tableOptions.forEach(option => {
-                const capacity = parseInt(option.dataset.capacity);
-                if (capacity < count) {
-                    option.disabled = true;
-                    option.style.display = 'none';
-                    if (option.selected) {
-                        tableSelect.value = '';
-                    }
-                } else {
-                    option.disabled = false;
-                    option.style.display = '';
-                    availableCount++;
-                }
-            });
-
-            // Handle current selection if it was reset
-            if (tableSelect.value === '' && count > 0) {
-                // Optionally auto-select the first available table
-                // tableSelect.selectedIndex = 0; 
-            }
-        }
-
-        // Run on load and on change
-        guestCountInput.addEventListener('input', filterTables);
-        filterTables();
-    });
+    partySizeInput.addEventListener('input', filterTables);
+    
+    // Initial filter in case of validation back-fill
+    filterTables();
+});
 </script>

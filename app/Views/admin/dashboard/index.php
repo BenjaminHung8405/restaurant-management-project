@@ -1,5 +1,5 @@
 <!-- Page Header -->
-<div class="mb-8 flex flex-col md:flex-row md:items-center justify-between gap-4 font-outfit">
+<div class="mb-8 flex flex-col md:flex-row md:items-center justify-between gap-4 font-roboto">
     <div>
         <h1 class="text-2xl font-bold text-slate-900 tracking-tight">Bảng điều khiển</h1>
         <p class="text-slate-500 text-sm mt-1">Tổng quan về hoạt động kinh doanh của nhà hàng.</p>
@@ -66,7 +66,7 @@
 <div class="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm mb-8">
     <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">
         <div>
-            <h2 class="text-xl font-bold text-slate-900 tracking-tight font-outfit">Biểu đồ doanh thu</h2>
+            <h2 class="text-xl font-bold text-slate-900 tracking-tight font-roboto">Biểu đồ doanh thu</h2>
             <p class="text-slate-500 text-sm mt-1">Số liệu thống kê 7 ngày gần nhất.</p>
         </div>
         <div class="flex items-center gap-2">

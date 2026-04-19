@@ -9,8 +9,8 @@ $currentUser = $_SESSION['user'] ?? null;
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title><?php echo htmlspecialchars($pageTitle, ENT_QUOTES, 'UTF-8'); ?> | RestoMS</title>
     
-    <!-- Google Fonts -->
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Outfit:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <!-- Google Fonts - Roboto Vietnamese -->
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap&subset=vietnamese" rel="stylesheet">
     
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
@@ -34,8 +34,8 @@ $currentUser = $_SESSION['user'] ?? null;
                         }
                     },
                     fontFamily: {
-                        sans: ['Inter', 'sans-serif'],
-                        outfit: ['Outfit', 'sans-serif'],
+                        sans: ['Roboto', 'sans-serif'],
+                        roboto: ['Roboto', 'sans-serif'],
                     }
                 }
             }
@@ -44,8 +44,8 @@ $currentUser = $_SESSION['user'] ?? null;
 
     <style type="text/tailwindcss">
         @layer base {
-            body { @apply font-sans antialiased text-slate-900; }
-            h1, h2, h3, h4, h5, h6 { @apply font-outfit; }
+            body { @apply font-roboto antialiased text-slate-900; font-family: 'Roboto', sans-serif; }
+            h1, h2, h3, h4, h5, h6 { @apply font-roboto font-bold; font-family: 'Roboto', sans-serif; }
         }
         @layer components {
             .no-scrollbar::-webkit-scrollbar { display: none; }

@@ -2,21 +2,23 @@
 
 namespace App\Controllers;
 
-use App\Models\Reservation;
+use App\Models\Order;
+use Throwable;
 
 class AdminOrderController extends AdminBaseController
 {
+    private const STATUS_FLOW = array(
+        'pending' => array('preparing', 'cancelled'),
+        'preparing' => array('serving'),
+        'serving' => array('completed'),
+        'completed' => array(),
+        'cancelled' => array()
+    );
+
     public function index()
     {
-        $reservationModel = new Reservation();
-        
-        $stats = $reservationModel->getStats();
-        $reservations = $reservationModel->getAllWithDetails();
-
         $this->render('admin/orders/index', array(
             'title' => 'Quản lý đơn hàng',
-            'stats' => $stats,
-            'reservations' => $reservations,
             'flashSuccess' => $_SESSION['admin_orders_success'] ?? '',
             'flashError' => $_SESSION['admin_orders_error'] ?? ''
         ), 'layouts/admin');
@@ -24,44 +26,145 @@ class AdminOrderController extends AdminBaseController
         unset($_SESSION['admin_orders_success'], $_SESSION['admin_orders_error']);
     }
 
+    public function getOrdersAjax()
+    {
+        header('Content-Type: application/json');
+        
+        $tableId = $_GET['table_id'] ?? null;
+        $filters = array();
+        if ($tableId && $this->isValidUuid($tableId)) {
+            $filters['table_id'] = $tableId;
+        }
+
+        try {
+            $orderModel = new Order();
+            $orders = $orderModel->getAllWithDetails($filters);
+            
+            echo json_encode(array(
+                'success' => true,
+                'data' => $orders
+            ));
+        } catch (Throwable $e) {
+            http_response_code(500);
+            echo json_encode(array(
+                'success' => false,
+                'message' => 'Lỗi server: ' . $e->getMessage()
+            ));
+        }
+    }
+
+    public function getOrderItemsAjax()
+    {
+        header('Content-Type: application/json');
+        
+        $orderId = $_GET['id'] ?? '';
+        if (!$this->isValidUuid($orderId)) {
+            http_response_code(400);
+            echo json_encode(array('success' => false, 'message' => 'ID đơn hàng không hợp lệ.'));
+            return;
+        }
+
+        try {
+            $orderModel = new Order();
+            $items = $orderModel->getItems($orderId);
+            
+            echo json_encode(array(
+                'success' => true,
+                'data' => $items
+            ));
+        } catch (Throwable $e) {
+            http_response_code(500);
+            echo json_encode(array(
+                'success' => false,
+                'message' => 'Lỗi server: ' . $e->getMessage()
+            ));
+        }
+    }
+
     public function updateStatus()
     {
+        header('Content-Type: application/json');
+
         if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
-            header('Location: ' . url('/admin/orders'));
-            exit;
+            http_response_code(405);
+            echo json_encode(array('success' => false, 'message' => 'Method not allowed'));
+            return;
         }
 
-        $reservationId = trim((string) ($_POST['reservation_id'] ?? ''));
-        $newStatus = strtolower(trim((string) ($_POST['status'] ?? '')));
-        $allowedStatuses = array('confirmed', 'cancelled', 'completed');
+        $orderId = $_POST['order_id'] ?? '';
+        $newStatus = $_POST['status'] ?? '';
+        $currentStatus = $_POST['current_status'] ?? '';
 
-        if (!$this->isValidUuid($reservationId) || !in_array($newStatus, $allowedStatuses, true)) {
-            $_SESSION['admin_orders_error'] = 'Yêu cầu cập nhật trạng thái không hợp lệ.';
-            header('Location: ' . url('/admin/orders'));
-            exit;
+        // 1. Validate ID
+        if (!$this->isValidUuid($orderId)) {
+            echo json_encode(array('success' => false, 'message' => 'ID đơn hàng không hợp lệ.'));
+            return;
         }
 
-        $reservationModel = new Reservation();
-        $reservation = $reservationModel->find($reservationId);
-        if (!$reservation) {
-            $_SESSION['admin_orders_error'] = 'Đơn đặt bàn không tồn tại hoặc đã bị xóa.';
-            header('Location: ' . url('/admin/orders'));
-            exit;
+        // 2. Validate Transition
+        if (!isset(self::STATUS_FLOW[$currentStatus]) || !in_array($newStatus, self::STATUS_FLOW[$currentStatus], true)) {
+            echo json_encode(array(
+                'success' => false, 
+                'message' => "Chuyển đổi trạng thái từ '$currentStatus' sang '$newStatus' không hợp lệ."
+            ));
+            return;
         }
 
-        if (($reservation['status'] ?? '') === $newStatus) {
-            $_SESSION['admin_orders_success'] = 'Trạng thái đơn đã ở giá trị yêu cầu.';
-            header('Location: ' . url('/admin/orders'));
-            exit;
+        try {
+            $orderModel = new Order();
+            
+            // 3. Atomic Update with Concurrency Check
+            $updated = $orderModel->updateStatus($orderId, $newStatus, $currentStatus);
+
+            if ($updated) {
+                echo json_encode(array(
+                    'success' => true,
+                    'message' => 'Cập nhật trạng thái thành công.'
+                ));
+            } else {
+                // Means the status has already changed (Race condition)
+                $order = $orderModel->find($orderId);
+                $latestStatus = $order['order_status'] ?? 'unknown';
+                
+                echo json_encode(array(
+                    'success' => false,
+                    'message' => "Không thể cập nhật. Trạng thái hiện tại đã thay đổi thành '$latestStatus'. Vui lòng làm mới trang.",
+                    'latest_status' => $latestStatus
+                ));
+            }
+        } catch (Throwable $e) {
+            http_response_code(500);
+            echo json_encode(array(
+                'success' => false,
+                'message' => 'Lỗi database: ' . $e->getMessage()
+            ));
+        }
+    }
+
+    public function cleanup()
+    {
+        header('Content-Type: application/json');
+
+        if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+            http_response_code(405);
+            echo json_encode(array('success' => false, 'message' => 'Method not allowed'));
+            return;
         }
 
-        if ($reservationModel->updateStatus($reservationId, $newStatus)) {
-            $_SESSION['admin_orders_success'] = 'Cập nhật trạng thái đặt bàn thành công.';
-        } else {
-            $_SESSION['admin_orders_error'] = 'Cập nhật trạng thái thất bại.';
-        }
+        try {
+            $orderModel = new Order();
+            $orderModel->cleanupOldOrders();
 
-        header('Location: ' . url('/admin/orders'));
-        exit;
+            echo json_encode(array(
+                'success' => true,
+                'message' => 'Đã dọn dẹp các đơn hàng cũ thành công.'
+            ));
+        } catch (Throwable $e) {
+            http_response_code(500);
+            echo json_encode(array(
+                'success' => false,
+                'message' => 'Lỗi khi dọn dẹp: ' . $e->getMessage()
+            ));
+        }
     }
 }

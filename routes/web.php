@@ -8,6 +8,8 @@ use App\Controllers\AuthController;
 use App\Controllers\AdminOrderController;
 use App\Controllers\AdminMenuController;
 use App\Controllers\AdminDashboardController;
+use App\Controllers\KitchenController;
+use App\Controllers\AdminPosController;
 use App\Core\Router;
 
 return function (Router $router) {
@@ -22,7 +24,10 @@ return function (Router $router) {
     $router->get('/admin', array(AdminDashboardController::class, 'index'));
     $router->get('/admin/dashboard', array(AdminDashboardController::class, 'index'));
     $router->get('/admin/orders', array(AdminOrderController::class, 'index'));
+    $router->get('/admin/orders/api/list', array(AdminOrderController::class, 'getOrdersAjax'));
+    $router->get('/admin/orders/api/items', array(AdminOrderController::class, 'getOrderItemsAjax'));
     $router->post('/admin/orders/update-status', array(AdminOrderController::class, 'updateStatus'));
+    $router->post('/admin/orders/cleanup', array(AdminOrderController::class, 'cleanup'));
     
     $router->get('/admin/menu', array(AdminMenuController::class, 'index'));
     $router->get('/admin/menu/create', array(AdminMenuController::class, 'create'));
@@ -38,9 +43,28 @@ return function (Router $router) {
     $router->post('/admin/categories/update', array(\App\Controllers\AdminCategoryController::class, 'update'));
     $router->post('/admin/categories/delete', array(\App\Controllers\AdminCategoryController::class, 'destroy'));
 
+    // Admin Kitchen
+    $router->get('/admin/kitchen', array(KitchenController::class, 'index'));
+    $router->get('/admin/kitchen/api/pending-orders', array(KitchenController::class, 'getPendingOrders'));
+    $router->post('/admin/kitchen/api/mark-item-cooking', array(KitchenController::class, 'markItemCooking'));
+    $router->post('/admin/kitchen/api/mark-item-done', array(KitchenController::class, 'markItemDone'));
+
     // Admin Reservations
+    $router->get('/admin/reservations', array(\App\Controllers\AdminReservationController::class, 'index'));
     $router->get('/admin/reservations/create', array(\App\Controllers\AdminReservationController::class, 'create'));
     $router->post('/admin/reservations/store', array(\App\Controllers\AdminReservationController::class, 'store'));
+    $router->post('/admin/reservations/update-status', array(\App\Controllers\AdminReservationController::class, 'updateStatus'));
+
+    // Admin Table Map
+    $router->get('/admin/tables', array(\App\Controllers\AdminTableController::class, 'index'));
+    $router->get('/admin/tables/api/status', array(\App\Controllers\AdminTableController::class, 'getTablesAjax'));
+    $router->post('/admin/api/tables/clean', array(AdminPosController::class, 'cleanTable'));
+
+    // POS APIs
+    $router->get('/admin/api/pos/menu', array(AdminPosController::class, 'menu'));
+    $router->get('/admin/api/pos/order', array(AdminPosController::class, 'getOrder'));
+    $router->post('/admin/api/pos/order/save', array(AdminPosController::class, 'saveOrder'));
+    $router->post('/admin/api/pos/order/checkout', array(AdminPosController::class, 'checkout'));
     
     // Meal Routes
     $router->get('/menu', array(MealController::class, 'index'));

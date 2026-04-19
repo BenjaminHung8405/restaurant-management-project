@@ -162,6 +162,7 @@ CREATE TABLE order_items (
   quantity INT NOT NULL COMMENT 'Quantity ordered',
   unit_price DECIMAL(10, 2) NOT NULL COMMENT 'Price per unit at time of order',
   notes VARCHAR(500) COMMENT 'Special instructions for this item, optional',
+  status VARCHAR(20) NOT NULL DEFAULT 'pending' COMMENT 'Kitchen status: pending, cooking, done',
   created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT 'Record creation timestamp',
   
   PRIMARY KEY (id),

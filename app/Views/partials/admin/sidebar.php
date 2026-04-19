@@ -3,10 +3,10 @@ $currentPath = parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH);
 $sidebarItems = [
     ['label' => 'Bảng điều khiển', 'href' => url('/admin'),        'icon' => 'layout-dashboard', 'active_pattern' => '/\/admin$/'],
     ['label' => 'Đơn hàng',        'href' => url('/admin/orders'), 'icon' => 'shopping-cart',    'active_pattern' => '/\/admin\/orders/'],
+    ['label' => 'Nhà bếp',         'href' => url('/admin/kitchen'), 'icon' => 'chef-hat',        'active_pattern' => '/\/admin\/kitchen/'],
+    ['label' => 'Đặt Bàn',        'href' => url('/admin/reservations'), 'icon' => 'calendar',    'active_pattern' => '/\/admin\/reservations/'],
     ['label' => 'Danh mục',        'href' => url('/admin/categories'), 'icon' => 'layers',        'active_pattern' => '/\/admin\/categories/'],
-    ['label' => 'Thực đơn',        'href' => url('/admin/menu'),   'icon' => 'utensils-crossed', 'active_pattern' => '/\/admin\/menu/'],
-    ['label' => 'Tạo Đặt bàn',     'href' => url('/admin/reservations/create'), 'icon' => 'calendar-plus', 'active_pattern' => '/\/admin\/reservations\/create/'],
-    ['label' => 'Bàn ăn',          'href' => '#',                  'icon' => 'table-2',          'active_pattern' => '/\/admin\/tables/'],
+    ['label' => 'Bàn ăn',          'href' => url('/admin/tables'), 'icon' => 'table-2',          'active_pattern' => '/\/admin\/tables/'],
     ['label' => 'Người dùng',      'href' => '#',                  'icon' => 'users',            'active_pattern' => '/\/admin\/users/'],
     ['label' => 'Cài đặt',         'href' => '#',                  'icon' => 'settings',         'active_pattern' => '/\/admin\/settings/'],
 ];

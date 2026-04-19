@@ -1,7 +1,7 @@
 <!-- Page Header -->
 <div class="mb-8 flex flex-col md:flex-row md:items-center justify-between gap-4">
     <div>
-        <h1 class="text-3xl font-extrabold text-slate-900 tracking-tight font-outfit">Quản lý Thực đơn</h1>
+        <h1 class="text-3xl font-extrabold text-slate-900 tracking-tight font-roboto">Quản lý Thực đơn</h1>
         <p class="text-slate-500 text-sm mt-1">Cập nhật danh sách món ăn, danh mục và quản lý tình trạng kinh doanh.</p>
     </div>
     <a href="<?php echo url('/admin/menu/create'); ?>" class="inline-flex items-center gap-2 px-6 py-3 bg-primary-600 hover:bg-primary-700 text-white rounded-2xl font-bold shadow-xl shadow-primary-500/25 transition-all hover:-translate-y-1 active:translate-y-0 group">
@@ -136,7 +136,7 @@
 
                             <!-- Price -->
                             <td class="px-6 py-4">
-                                <span class="font-extrabold text-slate-950 font-outfit text-base">
+                                <span class="font-extrabold text-slate-950 font-roboto text-base">
                                     <?php echo number_format((float) $item['price'], 0, ',', '.'); ?>
                                     <span class="text-[10px] text-slate-400 font-normal uppercase ml-0.5">đ</span>
                                 </span>
