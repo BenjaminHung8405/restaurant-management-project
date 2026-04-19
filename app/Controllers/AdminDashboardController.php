@@ -7,6 +7,12 @@ use PDO;
 
 class AdminDashboardController extends AdminBaseController
 {
+    public function __construct()
+    {
+        parent::__construct();
+        \App\Middlewares\AuthMiddleware::requireRole(['admin']);
+    }
+
     public function index()
     {
         $db = Database::connection();

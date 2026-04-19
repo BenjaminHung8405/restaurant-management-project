@@ -271,7 +271,7 @@ if ($cartFlashError !== '') {
         <div class="border-t border-white/5">
             <div class="max-w-7xl mx-auto px-4 sm:px-8 py-6">
                 <p class="text-center text-xs text-neutral-500">
-                    &copy; <?php echo date('Y'); ?> <span class="text-neutral-300 font-medium">RestoMS</span>. Bảo lưu mọi quyền. Build with ❤️ for Gastronomy.
+                    &copy; <?php echo date('Y'); ?> <span class="text-neutral-300 font-medium">RestoMS</span>. Bảo lưu mọi quyền.
                 </p>
             </div>
         </div>

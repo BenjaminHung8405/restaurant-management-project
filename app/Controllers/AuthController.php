@@ -75,18 +75,18 @@ class AuthController extends BaseController
         }
 
         $userModel = new User();
-        $user = $userModel->findByIdentity($identity);
+        $user = $userModel->findByUsername($identity);
 
-        if (!$user) {
+        if (!$user || ($user['status'] ?? 'inactive') !== 'active') {
             $this->render('auth/login', array(
                 'title' => 'Đăng nhập',
                 'identity' => $identity,
-                'errorMessage' => 'Thông tin đăng nhập không chính xác.'
+                'errorMessage' => 'Tài khoản không chính xác hoặc đã bị khóa.'
             ));
             return;
         }
 
-        $storedHash = (string) ($user['password_hash'] ?? '');
+        $storedHash = (string) ($user['password'] ?? '');
         $isPasswordValid = false;
 
         if ($storedHash !== '') {
@@ -110,14 +110,14 @@ class AuthController extends BaseController
         session_regenerate_id(true);
         $displayName = trim((string) ($user['full_name'] ?? ''));
         if ($displayName === '') {
-            $displayName = (string) $user['email'];
+            $displayName = (string) ($user['username'] ?? 'User');
         }
 
         $_SESSION['user'] = array(
-            'user_id' => (string) $user['id'],
-            'username' => $displayName,
+            'id' => (string) $user['id'],
+            'full_name' => $displayName,
+            'username' => (string) $user['username'],
             'role' => (string) $user['role'],
-            'email' => (string) $user['email'],
         );
         $_SESSION['user_id'] = (string) $user['id'];
 
@@ -142,14 +142,26 @@ class AuthController extends BaseController
 
     private function redirectByRole($role)
     {
-        $normalizedRole = strtolower(trim((string) $role));
-        if ($normalizedRole === 'admin' || $normalizedRole === 'staff') {
-            session_write_close();
-            header('Location: ' . url('/admin/orders'));
-            exit;
+        $role = strtolower(trim((string) $role));
+        
+        switch ($role) {
+            case 'kitchen':
+                $target = '/admin/kitchen';
+                break;
+            case 'waiter':
+            case 'cashier':
+                $target = '/admin/tables';
+                break;
+            case 'admin':
+                $target = '/admin'; // Redirect to dashboard
+                break;
+            default:
+                $target = '/';
+                break;
         }
+
         session_write_close();
-        header('Location: ' . url('/'));
+        header('Location: ' . url($target));
         exit;
     }
 }

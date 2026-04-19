@@ -12,6 +12,12 @@ class AdminMenuController extends AdminBaseController
     private $webPrefix = 'assets/uploads/';
     private $maxSize = 2097152; // 2MB
 
+    public function __construct()
+    {
+        parent::__construct();
+        \App\Middlewares\AuthMiddleware::requireRole(['admin']);
+    }
+
     public function index()
     {
         $mealModel = new Meal();

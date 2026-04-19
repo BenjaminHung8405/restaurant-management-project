@@ -10,6 +10,12 @@ use Throwable;
 
 class AdminPosController extends AdminBaseController
 {
+    public function __construct()
+    {
+        parent::__construct();
+        \App\Middlewares\AuthMiddleware::requireRole(['admin', 'cashier', 'waiter']);
+    }
+
     /**
      * GET /admin/api/pos/menu
      * Returns categories and available menu items
@@ -114,9 +120,13 @@ class AdminPosController extends AdminBaseController
                 }
             } else {
                 $orderId = $this->uuid();
+                $staffNameSnapshot = $_SESSION['user']['full_name'] ?? $_SESSION['full_name'] ?? 'System / Unknown';
+                
                 $orderModel->create([
                     'id' => $orderId,
-                    'user_id' => $_SESSION['user_id'] ?? ($_SESSION['user']['id'] ?? null),
+                    'user_id' => null, // Placeholder for customer if needed
+                    'created_by_id' => $_SESSION['user_id'] ?? ($_SESSION['user']['id'] ?? null),
+                    'staff_name_snapshot' => $staffNameSnapshot,
                     'table_id' => $tableId,
                     'total_amount' => 0, // Will be set by syncOrderItems
                     'order_status' => 'preparing',
@@ -145,6 +155,12 @@ class AdminPosController extends AdminBaseController
     public function checkout()
     {
         header('Content-Type: application/json');
+
+        // Security: Waiters are not allowed to checkout
+        if (($_SESSION['user']['role'] ?? '') === 'waiter') {
+            echo json_encode(['success' => false, 'message' => 'Lỗi: Phục vụ không có quyền thanh toán đơn hàng.']);
+            return;
+        }
         $data = json_decode(file_get_contents('php://input'), true);
         $orderId = $data['order_id'] ?? null;
         $tableId = $data['table_id'] ?? null;

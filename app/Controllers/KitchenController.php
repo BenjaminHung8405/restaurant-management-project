@@ -8,6 +8,12 @@ use Throwable;
 
 class KitchenController extends AdminBaseController
 {
+    public function __construct()
+    {
+        parent::__construct();
+        \App\Middlewares\AuthMiddleware::requireRole(['admin', 'kitchen']);
+    }
+
     public function index()
     {
         // Standalone view, so we pass null as the third argument (layout)

@@ -61,6 +61,14 @@ return function (Router $router) {
     $router->post('/admin/tables/api/store', array(\App\Controllers\AdminTableController::class, 'store'));
     $router->post('/admin/api/tables/clean', array(AdminPosController::class, 'cleanTable'));
 
+    // Admin Users (Staff Management)
+    $router->get('/admin/users', array(\App\Controllers\AdminUserController::class, 'index'));
+    $router->get('/admin/users/create', array(\App\Controllers\AdminUserController::class, 'create'));
+    $router->post('/admin/users/store', array(\App\Controllers\AdminUserController::class, 'store'));
+    $router->get('/admin/users/edit', array(\App\Controllers\AdminUserController::class, 'edit'));
+    $router->post('/admin/users/update', array(\App\Controllers\AdminUserController::class, 'update'));
+    $router->post('/admin/users/toggle-status', array(\App\Controllers\AdminUserController::class, 'toggleStatus'));
+
     // POS APIs
     $router->get('/admin/api/pos/menu', array(AdminPosController::class, 'menu'));
     $router->get('/admin/api/pos/order', array(AdminPosController::class, 'getOrder'));

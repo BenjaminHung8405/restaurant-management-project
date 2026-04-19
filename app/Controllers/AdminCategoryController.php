@@ -7,6 +7,12 @@ use Throwable;
 
 class AdminCategoryController extends AdminBaseController
 {
+    public function __construct()
+    {
+        parent::__construct();
+        \App\Middlewares\AuthMiddleware::requireRole(['admin']);
+    }
+
     public function index()
     {
         $categoryModel = new Category();

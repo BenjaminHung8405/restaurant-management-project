@@ -20,23 +20,26 @@ SET FOREIGN_KEY_CHECKS = 1;
 
 -- ============================================================
 -- Table: users
--- Description: Stores user accounts (admin, staff, customer)
+-- Description: Stores user accounts (admin, cashier, kitchen)
 -- ============================================================
 CREATE TABLE users (
   id CHAR(36) NOT NULL COMMENT 'UUID primary key',
-  email VARCHAR(255) NOT NULL UNIQUE COMMENT 'Email address, unique constraint',
-  password_hash VARCHAR(255) NOT NULL COMMENT 'Bcrypt hashed password',
-  full_name VARCHAR(255) NOT NULL COMMENT 'Full name of user',
-  phone_number VARCHAR(20) COMMENT 'Phone number, optional',
-  role ENUM('admin', 'staff', 'customer') NOT NULL DEFAULT 'customer' COMMENT 'User role',
+  username VARCHAR(100) NOT NULL UNIQUE COMMENT 'Username for login',
+  password VARCHAR(255) NOT NULL COMMENT 'Hashed password',
+  full_name VARCHAR(255) NOT NULL COMMENT 'Full name of staff',
+  role ENUM('admin', 'cashier', 'waiter', 'kitchen') NOT NULL DEFAULT 'waiter' COMMENT 'User role',
+  status ENUM('active', 'inactive') NOT NULL DEFAULT 'active' COMMENT 'Account status',
   created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT 'Record creation timestamp',
-  updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT 'Last update timestamp',
   
   PRIMARY KEY (id),
-  KEY idx_email (email),
+  KEY idx_username (username),
   KEY idx_role (role)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
-COMMENT='User accounts with role-based access control (RBAC)';
+COMMENT='Staff accounts with role-based access control (RBAC)';
+
+-- Insert default admin (password: admin123)
+INSERT INTO users (id, username, password, full_name, role, status) VALUES 
+('f47ac10b-58cc-4372-a567-0e02b2c3d479', 'admin', '$2y$10$r6JDGjRaGfxVQc8RbJSOV.Xif86cVJy31FzvOEs8hX1nyG0H2HlGW', 'Administrator', 'admin', 'active');
 
 -- ============================================================
 -- Table: categories
@@ -134,6 +137,8 @@ CREATE TABLE orders (
   id CHAR(36) NOT NULL COMMENT 'UUID primary key',
   user_id CHAR(36) COMMENT 'Foreign key to users table, nullable for walk-in customers',
   table_id CHAR(36) NOT NULL COMMENT 'Foreign key to tables table, mandatory',
+  created_by_id CHAR(36) NULL COMMENT 'Staff who created the order',
+  staff_name_snapshot VARCHAR(255) NULL COMMENT 'Snapshot of staff name at creation',
   total_amount DECIMAL(10, 2) NOT NULL COMMENT 'Total order amount',
   order_status VARCHAR(50) NOT NULL DEFAULT 'pending' COMMENT 'Status: pending, preparing, ready, served, completed, cancelled',
   payment_status VARCHAR(50) NOT NULL DEFAULT 'unpaid' COMMENT 'Payment status: unpaid, paid, refunded',
@@ -142,9 +147,11 @@ CREATE TABLE orders (
   
   PRIMARY KEY (id),
   CONSTRAINT fk_orders_user_id FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE SET NULL,
+  CONSTRAINT fk_orders_created_by FOREIGN KEY (created_by_id) REFERENCES users(id) ON DELETE SET NULL,
   CONSTRAINT fk_orders_table_id FOREIGN KEY (table_id) REFERENCES tables(id) ON DELETE RESTRICT,
   KEY idx_user_id (user_id),
   KEY idx_table_id (table_id),
+  KEY idx_created_by_id (created_by_id),
   KEY idx_order_status (order_status),
   KEY idx_payment_status (payment_status),
   KEY idx_created_at (created_at)

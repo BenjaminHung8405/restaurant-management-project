@@ -8,6 +8,12 @@ use Throwable;
 
 class AdminReservationController extends AdminBaseController
 {
+    public function __construct()
+    {
+        parent::__construct();
+        \App\Middlewares\AuthMiddleware::requireRole(['admin', 'cashier', 'waiter']);
+    }
+
     public function index()
     {
         $reservationModel = new Reservation();

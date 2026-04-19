@@ -14,6 +14,7 @@ class AdminTableController extends AdminBaseController
     public function __construct()
     {
         parent::__construct();
+        \App\Middlewares\AuthMiddleware::requireRole(['admin', 'cashier', 'waiter']);
         $this->tableModel = new Table();
     }
     /**

@@ -2,7 +2,7 @@
 declare(strict_types=1);
 
 $host = 'localhost';
-$dbName = 'restoms_db';
+$dbName = 'restaurant_db';
 $dbUser = 'root';
 $dbPassword = 'vertrigo';
 $charset = 'utf8mb4';

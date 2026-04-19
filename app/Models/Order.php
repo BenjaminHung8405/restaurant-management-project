@@ -16,14 +16,23 @@ class Order extends BaseModel
     {
         $sql = '
             INSERT INTO ' . $this->table . ' (
-                id, user_id, table_id, total_amount, order_status, payment_status
+                id, user_id, table_id, created_by_id, staff_name_snapshot, total_amount, order_status, payment_status
             ) VALUES (
-                :id, :user_id, :table_id, :total_amount, :order_status, :payment_status
+                :id, :user_id, :table_id, :created_by_id, :staff_name_snapshot, :total_amount, :order_status, :payment_status
             )
         ';
         
         $statement = $this->db->prepare($sql);
-        return $statement->execute($data);
+        return $statement->execute(array(
+            'id' => $data['id'],
+            'user_id' => $data['user_id'] ?? null,
+            'table_id' => $data['table_id'],
+            'created_by_id' => $data['created_by_id'] ?? null,
+            'staff_name_snapshot' => $data['staff_name_snapshot'] ?? null,
+            'total_amount' => $data['total_amount'] ?? 0,
+            'order_status' => $data['order_status'],
+            'payment_status' => $data['payment_status'] ?? 'unpaid'
+        ));
     }
 
     public function addItems($orderId, $items)
@@ -225,7 +234,7 @@ class Order extends BaseModel
      * Automatically creates a pending order for a table during check-in
      * if no active order already exists.
      */
-    public function createOrderForCheckin($tableId, $staffId)
+    public function createOrderForCheckin($tableId, $staffId, $staffName = null)
     {
         // 1. Check if active order already exists
         $sqlCheck = "SELECT id FROM " . $this->table . " 
@@ -244,7 +253,9 @@ class Order extends BaseModel
         $orderId = $this->uuid();
         $data = [
             'id' => $orderId,
-            'user_id' => $staffId,
+            'user_id' => null,
+            'created_by_id' => $staffId,
+            'staff_name_snapshot' => $staffName,
             'table_id' => $tableId,
             'total_amount' => 0,
             'order_status' => self::STATUS_PENDING,

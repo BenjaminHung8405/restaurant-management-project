@@ -7,6 +7,12 @@ use Throwable;
 
 class AdminOrderController extends AdminBaseController
 {
+    public function __construct()
+    {
+        parent::__construct();
+        \App\Middlewares\AuthMiddleware::requireRole(['admin', 'cashier']);
+    }
+
     private const STATUS_FLOW = array(
         'pending' => array('preparing', 'cancelled'),
         'preparing' => array('serving'),

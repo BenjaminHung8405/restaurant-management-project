@@ -138,10 +138,12 @@
                             </svg>
                             Lưu & Gửi Bếp
                         </button>
+                        <?php if (($_SESSION['user']['role'] ?? '') !== 'waiter'): ?>
                         <button onclick="handleCheckout()" id="btn-checkout" class="flex flex-col items-center justify-center gap-1 py-4 bg-primary-600 text-white rounded-[2rem] font-black text-[10px] uppercase tracking-widest hover:bg-primary-700 transition-all active:scale-95 shadow-xl shadow-primary-200 disabled:opacity-30 disabled:pointer-events-none">
                             <i data-lucide="credit-card" class="w-5 h-5 mb-1"></i>
                             Thanh Toán
                         </button>
+                        <?php endif; ?>
                     </div>
                 </div>
             </div>
@@ -492,7 +494,7 @@
                 </div>
             `;
             saveBtn.disabled = true;
-            checkoutBtn.disabled = true;
+            if (checkoutBtn) checkoutBtn.disabled = true;
             subtotalEl.innerText = '0₫';
             totalEl.innerText = '0₫';
             lucide.createIcons();
@@ -500,7 +502,7 @@
         }
 
         saveBtn.disabled = false;
-        checkoutBtn.disabled = !currentTableSession.orderId;
+        if (checkoutBtn) checkoutBtn.disabled = !currentTableSession.orderId;
 
         let total = 0;
         container.innerHTML = cart.map(item => {

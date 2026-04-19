@@ -1,15 +1,22 @@
 <?php
 $currentPath = parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH);
+$userRole = $_SESSION['user']['role'] ?? '';
+
 $sidebarItems = [
-    ['label' => 'Bảng điều khiển', 'href' => url('/admin'),        'icon' => 'layout-dashboard', 'active_pattern' => '/\/admin$/'],
-    ['label' => 'Đơn hàng',        'href' => url('/admin/orders'), 'icon' => 'shopping-cart',    'active_pattern' => '/\/admin\/orders/'],
-    ['label' => 'Nhà bếp',         'href' => url('/admin/kitchen'), 'icon' => 'chef-hat',        'active_pattern' => '/\/admin\/kitchen/'],
-    ['label' => 'Đặt Bàn',        'href' => url('/admin/reservations'), 'icon' => 'calendar',    'active_pattern' => '/\/admin\/reservations/'],
-    ['label' => 'Danh mục',        'href' => url('/admin/categories'), 'icon' => 'layers',        'active_pattern' => '/\/admin\/categories/'],
-    ['label' => 'Bàn ăn',          'href' => url('/admin/tables'), 'icon' => 'table-2',          'active_pattern' => '/\/admin\/tables/'],
-    ['label' => 'Người dùng',      'href' => '#',                  'icon' => 'users',            'active_pattern' => '/\/admin\/users/'],
-    ['label' => 'Cài đặt',         'href' => '#',                  'icon' => 'settings',         'active_pattern' => '/\/admin\/settings/'],
+    ['label' => 'Bảng điều khiển', 'href' => url('/admin'),        'icon' => 'layout-dashboard', 'active_pattern' => '/\/admin$/', 'roles' => ['admin']],
+    ['label' => 'Đơn hàng',        'href' => url('/admin/orders'), 'icon' => 'shopping-cart',    'active_pattern' => '/\/admin\/orders/', 'roles' => ['admin', 'cashier']],
+    ['label' => 'Nhà bếp',         'href' => url('/admin/kitchen'), 'icon' => 'chef-hat',        'active_pattern' => '/\/admin\/kitchen/', 'roles' => ['admin', 'kitchen']],
+    ['label' => 'Đặt Bàn',        'href' => url('/admin/reservations'), 'icon' => 'calendar',    'active_pattern' => '/\/admin\/reservations/', 'roles' => ['admin', 'cashier', 'waiter']],
+    ['label' => 'Bàn ăn',          'href' => url('/admin/tables'), 'icon' => 'table-2',          'active_pattern' => '/\/admin\/tables/', 'roles' => ['admin', 'cashier', 'waiter']],
+    ['label' => 'Danh mục',        'href' => url('/admin/categories'), 'icon' => 'layers',        'active_pattern' => '/\/admin\/categories/', 'roles' => ['admin']], // Typically admin
+    ['label' => 'Nhân sự',         'href' => url('/admin/users'),  'icon' => 'users',            'active_pattern' => '/\/admin\/users/', 'roles' => ['admin']],
+    ['label' => 'Cài đặt',         'href' => '#',                  'icon' => 'settings',         'active_pattern' => '/\/admin\/settings/', 'roles' => ['admin']],
 ];
+
+// Filter items based on role
+$sidebarItems = array_filter($sidebarItems, function($item) use ($userRole) {
+    return in_array($userRole, $item['roles']);
+});
 ?>
 
 <!-- Desktop Sidebar -->
