@@ -88,18 +88,32 @@
                     </td>
                     <td class="px-6 py-4 text-right">
                         <div class="flex justify-end space-x-2">
-                            <a href="<?= url('/admin/users/edit?id=' . $user['id']) ?>" 
-                               class="p-2 text-indigo-600 hover:bg-indigo-50 rounded-lg transition"
-                               title="Chỉnh sửa">
-                                <i data-lucide="edit-3" class="w-4 h-4"></i>
-                            </a>
-                            <form action="<?= url('/admin/users/toggle-status?id=' . $user['id']) ?>" method="POST" class="inline">
-                                <button type="submit" 
-                                        class="p-2 <?= $user['status'] === 'active' ? 'text-red-500 hover:bg-red-50' : 'text-green-500 hover:bg-green-50' ?> rounded-lg transition"
-                                        title="<?= $user['status'] === 'active' ? 'Khóa' : 'Mở khóa' ?>">
-                                    <i data-lucide="<?= $user['status'] === 'active' ? 'lock' : 'unlock' ?>" class="w-4 h-4"></i>
-                                </button>
-                            </form>
+                            <?php 
+                            $canManage = false;
+                            if ($currentUser && $user['id'] !== $currentUser['id']) {
+                                $currPrio = $rolePriority[$currentUser['role']] ?? 0;
+                                $targetPrio = $rolePriority[$user['role']] ?? 0;
+                                if ($currPrio > $targetPrio) {
+                                    $canManage = true;
+                                }
+                            }
+                            ?>
+                            <?php if ($canManage): ?>
+                                <a href="<?= url('/admin/users/edit?id=' . $user['id']) ?>" 
+                                   class="p-2 text-indigo-600 hover:bg-indigo-50 rounded-lg transition"
+                                   title="Chỉnh sửa">
+                                    <i data-lucide="edit-3" class="w-4 h-4"></i>
+                                </a>
+                                <form action="<?= url('/admin/users/toggle-status?id=' . $user['id']) ?>" method="POST" class="inline">
+                                    <button type="submit" 
+                                            class="p-2 <?= $user['status'] === 'active' ? 'text-red-500 hover:bg-red-50' : 'text-green-500 hover:bg-green-50' ?> rounded-lg transition"
+                                            title="<?= $user['status'] === 'active' ? 'Khóa' : 'Mở khóa' ?>">
+                                        <i data-lucide="<?= $user['status'] === 'active' ? 'lock' : 'unlock' ?>" class="w-4 h-4"></i>
+                                    </button>
+                                </form>
+                            <?php else: ?>
+                                <span class="text-gray-300 p-2 italic text-xs">Không có quyền</span>
+                            <?php endif; ?>
                         </div>
                     </td>
                 </tr>

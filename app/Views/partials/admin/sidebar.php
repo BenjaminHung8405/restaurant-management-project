@@ -8,6 +8,7 @@ $sidebarItems = [
     ['label' => 'Nhà bếp',         'href' => url('/admin/kitchen'), 'icon' => 'chef-hat',        'active_pattern' => '/\/admin\/kitchen/', 'roles' => ['admin', 'kitchen']],
     ['label' => 'Đặt Bàn',        'href' => url('/admin/reservations'), 'icon' => 'calendar',    'active_pattern' => '/\/admin\/reservations/', 'roles' => ['admin', 'cashier', 'waiter']],
     ['label' => 'Bàn ăn',          'href' => url('/admin/tables'), 'icon' => 'table-2',          'active_pattern' => '/\/admin\/tables/', 'roles' => ['admin', 'cashier', 'waiter']],
+    ['label' => 'Thực đơn',        'href' => url('/admin/menu'),   'icon' => 'utensils',         'active_pattern' => '/\/admin\/menu/',   'roles' => ['admin', 'kitchen', 'cashier']],
     ['label' => 'Danh mục',        'href' => url('/admin/categories'), 'icon' => 'layers',        'active_pattern' => '/\/admin\/categories/', 'roles' => ['admin']], // Typically admin
     ['label' => 'Nhân sự',         'href' => url('/admin/users'),  'icon' => 'users',            'active_pattern' => '/\/admin\/users/', 'roles' => ['admin']],
     ['label' => 'Cài đặt',         'href' => '#',                  'icon' => 'settings',         'active_pattern' => '/\/admin\/settings/', 'roles' => ['admin']],
