@@ -191,17 +191,6 @@ CREATE INDEX idx_menu_items_search ON menu_items(name, is_available, category_id
 -- Sample data for testing (optional)
 -- ============================================================
 
--- Insert sample admin user (password: admin123, bcrypt hash)
-INSERT INTO users (id, email, password_hash, full_name, phone_number, role)
-VALUES (
-  'f47ac10b-58cc-4372-a567-0e02b2c3d479',
-  'admin@restaurant.com',
-  '$2y$10$r6JDGjRaGfxVQc8RbJSOV.Xif86cVJy31FzvOEs8hX1nyG0H2HlGW',
-  'Admin User',
-  '+1234567890',
-  'admin'
-);
-
 -- Insert sample categories
 INSERT INTO categories (id, name, description, image_url, created_at, updated_at) VALUES ('19e6a569-fa40-4ed7-a08d-fd8c80c8aa44', 'Thịt Gà Đặc Sản', 'Những thớ thịt gà thả vườn săn chắc, tẩm ướp đậm đà gia vị thảo mộc và chế biến bằng sự đam mê.', 'https://www.themealdb.com/images/category/chicken.png', '2026-03-12 06:44:44.06078+00', '2026-03-12 06:44:44.06078+00');
 INSERT INTO categories (id, name, description, image_url, created_at, updated_at) VALUES ('27e07a31-f585-4fae-a8d3-dd43b686e6d4', 'Thịt Bò Thượng Hạng', 'Tuyển tập các món bò nội mọng nước, từ nướng xém cạnh đến hầm rục tủy xương, đánh thức mọi giác quan.', 'https://www.themealdb.com/images/category/beef.png', '2026-03-12 06:44:43.190658+00', '2026-03-12 06:44:43.190658+00');

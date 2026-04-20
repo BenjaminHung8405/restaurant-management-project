@@ -45,7 +45,7 @@
     </div>
 
     <!-- Table Grid -->
-    <div id="table-grid" class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-6">
+    <div id="table-grid" class="grid table-grid-responsive">
         <?php if (empty($tables)): ?>
             <!-- Skeleton Loaders -->
             <?php for($i=0; $i<10; $i++): ?>
@@ -282,7 +282,7 @@
                 tableDiv.id = `table-${table.id}`;
                 tableDiv.setAttribute('data-current-status', status);
                 tableDiv.onclick = () => handleTableClick(table);
-                tableDiv.className = `group relative aspect-square flex flex-col items-center justify-center p-6 border-2 border-${config.color}-100 bg-white rounded-[3rem] transition-all duration-500 hover:scale-[1.02] hover:shadow-2xl hover:border-${config.color}-300 cursor-pointer overflow-hidden active:scale-95 animate-[modal-in_0.5s_ease-out_forwards] opacity-0`;
+                tableDiv.className = `table-card group relative aspect-square min-w-0 flex flex-col items-center justify-center border-2 border-${config.color}-100 bg-white rounded-[3rem] transition-all duration-500 hover:scale-[1.02] hover:shadow-2xl hover:border-${config.color}-300 cursor-pointer overflow-hidden active:scale-95 animate-[modal-in_0.5s_ease-out_forwards] opacity-0`;
                 tableDiv.style.animationDelay = `${idx * 50}ms`;
                 tableDiv.innerHTML = getTableInnerHTML(table, status, config, badgeColor);
                 grid.appendChild(tableDiv);
@@ -293,7 +293,7 @@
                     tableDiv.setAttribute('data-current-status', status);
                     
                     // Update classes for color changes
-                    tableDiv.className = `group relative aspect-square flex flex-col items-center justify-center p-6 border-2 border-${config.color}-100 bg-white rounded-[3rem] transition-all duration-500 hover:scale-[1.02] hover:shadow-2xl hover:border-${config.color}-300 cursor-pointer overflow-hidden active:scale-95 ${status === 'occupied' ? 'ring-4 ring-rose-500/5' : ''}`;
+                    tableDiv.className = `table-card group relative aspect-square min-w-0 flex flex-col items-center justify-center border-2 border-${config.color}-100 bg-white rounded-[3rem] transition-all duration-500 hover:scale-[1.02] hover:shadow-2xl hover:border-${config.color}-300 cursor-pointer overflow-hidden active:scale-95 ${status === 'occupied' ? 'ring-4 ring-rose-500/5' : ''}`;
                     
                     // Update content
                     tableDiv.innerHTML = getTableInnerHTML(table, status, config, badgeColor);
@@ -317,23 +317,23 @@
             : table.table_number;
 
         return `
-            <div class="absolute -top-6 -right-6 text-[120px] font-black text-slate-900/[0.03] select-none pointer-events-none group-hover:scale-110 transition-transform duration-700">
+            <div class="table-card-watermark absolute -top-6 -right-6 font-black text-slate-900/[0.03] select-none pointer-events-none group-hover:scale-110 transition-transform duration-700">
                 ${tableNumberDisplay}
             </div>
 
-            <div class="mb-5 p-5 text-${config.color}-500 bg-${config.color}-50 rounded-[2rem] shadow-sm transition-all duration-300 group-hover:bg-white group-hover:shadow-md">
-                <i data-lucide="${config.icon}" class="w-10 h-10"></i>
+            <div class="table-card-icon-wrap text-${config.color}-500 bg-${config.color}-50 shadow-sm transition-all duration-300 group-hover:bg-white group-hover:shadow-md">
+                <i data-lucide="${config.icon}" class="table-card-icon"></i>
             </div>
 
-            <div class="text-center">
-                <h3 class="text-2xl font-black text-slate-800 tracking-tight">${table.table_number}</h3>
-                <div class="flex items-center justify-center gap-1.5 mt-1.5 text-slate-400 font-bold text-[10px] uppercase tracking-widest">
-                    <i data-lucide="users" class="w-3.5 h-3.5"></i>
+            <div class="table-card-meta text-center max-w-full">
+                <h3 class="table-card-number font-black text-slate-800 tracking-tight">${table.table_number}</h3>
+                <div class="table-card-capacity flex items-center justify-center gap-1.5 mt-1.5 text-slate-400 font-bold uppercase tracking-widest">
+                    <i data-lucide="users" class="table-card-capacity-icon"></i>
                     ${table.capacity} khách
                 </div>
             </div>
 
-            <div class="absolute bottom-6 left-1/2 -translate-x-1/2 whitespace-nowrap px-4 py-1.5 rounded-2xl ${badgeColor} text-white text-[9px] font-black uppercase tracking-[0.1em] shadow-lg shadow-${config.color}-100 transition-all duration-300">
+            <div class="table-card-badge absolute left-1/2 -translate-x-1/2 whitespace-nowrap ${badgeColor} text-white font-black uppercase tracking-[0.1em] shadow-lg shadow-${config.color}-100 transition-all duration-300">
                 ${config.label}
             </div>
         `;
@@ -799,6 +799,72 @@
     @keyframes modal-in {
         from { transform: translateY(20px); opacity: 0; }
         to { transform: translateY(0); opacity: 1; }
+    }
+
+    #table-grid.table-grid-responsive {
+        grid-template-columns: repeat(auto-fit, minmax(185px, 1fr));
+        gap: clamp(0.75rem, 1.3vw, 1.5rem);
+    }
+
+    #table-grid .table-card {
+        min-width: 0;
+        padding: clamp(0.75rem, 1.1vw, 1.5rem);
+    }
+
+    #table-grid .table-card-watermark {
+        font-size: clamp(4.5rem, 7.5vw, 7.5rem);
+        line-height: 1;
+    }
+
+    #table-grid .table-card-icon-wrap {
+        margin-bottom: clamp(0.45rem, 1vw, 1.25rem);
+        padding: clamp(0.7rem, 1.2vw, 1.25rem);
+        border-radius: clamp(1rem, 2vw, 2rem);
+    }
+
+    #table-grid .table-card-icon {
+        width: clamp(1.5rem, 2.4vw, 2.5rem);
+        height: clamp(1.5rem, 2.4vw, 2.5rem);
+    }
+
+    #table-grid .table-card-number {
+        font-size: clamp(1.2rem, 2vw, 1.75rem);
+        line-height: 1.1;
+        max-width: 100%;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+
+    #table-grid .table-card-capacity {
+        font-size: clamp(0.52rem, 0.85vw, 0.65rem);
+        letter-spacing: 0.08em;
+    }
+
+    #table-grid .table-card-capacity-icon {
+        width: clamp(0.7rem, 1vw, 0.875rem);
+        height: clamp(0.7rem, 1vw, 0.875rem);
+    }
+
+    #table-grid .table-card-badge {
+        bottom: clamp(0.55rem, 1.1vw, 1.5rem);
+        padding: clamp(0.2rem, 0.45vw, 0.375rem) clamp(0.5rem, 1vw, 1rem);
+        border-radius: clamp(0.7rem, 1.4vw, 1rem);
+        font-size: clamp(0.43rem, 0.68vw, 0.56rem);
+        line-height: 1;
+        letter-spacing: 0.08em;
+    }
+
+    @media (max-width: 1024px) {
+        #table-grid.table-grid-responsive {
+            grid-template-columns: repeat(auto-fit, minmax(165px, 1fr));
+        }
+    }
+
+    @media (max-width: 768px) {
+        #table-grid.table-grid-responsive {
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+        }
     }
     
     .no-scrollbar::-webkit-scrollbar { display: none; }
