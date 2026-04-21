@@ -54,11 +54,24 @@ class Reservation extends BaseModel
         return $this->db->query($sql)->fetchAll();
     }
 
-    public function updateStatus($id, $status)
+    public function updateStatus($id, $status, $tableId = null)
     {
+        if ($tableId) {
+            $sql = 'UPDATE ' . $this->table . ' SET status = :status, table_id = :table_id, updated_at = NOW() WHERE id = :id';
+            $statement = $this->db->prepare($sql);
+            return $statement->execute(array('status' => $status, 'table_id' => $tableId, 'id' => $id));
+        }
         $sql = 'UPDATE ' . $this->table . ' SET status = :status, updated_at = NOW() WHERE id = :id';
         $statement = $this->db->prepare($sql);
         return $statement->execute(array('status' => $status, 'id' => $id));
+    }
+
+    public function getActiveReservationsByDate($date)
+    {
+        $sql = 'SELECT table_id, DATE_FORMAT(reservation_time, "%H:%i") as time FROM ' . $this->table . ' WHERE DATE(reservation_time) = :date AND status IN ("pending", "confirmed") AND table_id IS NOT NULL';
+        $statement = $this->db->prepare($sql);
+        $statement->execute(array('date' => $date));
+        return $statement->fetchAll();
     }
 
     public function delete($id)

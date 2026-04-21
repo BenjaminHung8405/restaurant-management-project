@@ -235,6 +235,17 @@ class Order extends BaseModel
     }
 
 
+    public function hasActiveOrder($tableId)
+    {
+        $sqlCheck = "SELECT id FROM " . $this->table . " 
+                     WHERE table_id = :table_id 
+                     AND order_status IN ('pending', 'preparing', 'serving') 
+                     LIMIT 1";
+        $stmtCheck = $this->db->prepare($sqlCheck);
+        $stmtCheck->execute(['table_id' => $tableId]);
+        return $stmtCheck->fetch(\PDO::FETCH_ASSOC) !== false;
+    }
+
     /**
      * Automatically creates a pending order for a table during check-in
      * if no active order already exists.

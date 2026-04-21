@@ -101,9 +101,35 @@
                                 <td class="px-6 py-4 text-right">
                                     <div class="flex items-center justify-end gap-2">
                                         <?php if ($r['status'] === 'pending'): ?>
-                                            <form action="<?php echo url('/admin/reservations/update-status'); ?>" method="POST" class="inline">
+                                            <form action="<?php echo url('/admin/reservations/update-status'); ?>" method="POST" class="flex items-center gap-2">
                                                 <input type="hidden" name="id" value="<?php echo $r['id']; ?>">
                                                 <input type="hidden" name="status" value="confirmed">
+                                                <?php if (empty($r['table_id'])): ?>
+                                                    <select name="table_id" required class="text-xs border-slate-200 rounded-lg py-1 px-2 focus:ring-primary-500 focus:border-primary-500 w-28 bg-white" title="Chọn bàn cho khách">
+                                                        <option value="">Chọn bàn...</option>
+                                                        <?php foreach ($tables as $t): ?>
+                                                            <?php
+                                                                $isBooked = false;
+                                                                foreach ($reservations as $other) {
+                                                                    if ($other['id'] !== $r['id'] && 
+                                                                        !empty($other['table_id']) && 
+                                                                        $other['table_id'] == $t['id'] && 
+                                                                        in_array($other['status'], ['pending', 'confirmed']) && 
+                                                                        date('Y-m-d H:i', strtotime($other['reservation_time'])) === date('Y-m-d H:i', strtotime($r['reservation_time']))) {
+                                                                        $isBooked = true;
+                                                                        break;
+                                                                    }
+                                                                }
+                                                            ?>
+                                                            <option value="<?php echo $t['id']; ?>" <?php echo $isBooked ? 'disabled style="display:none;"' : ''; ?>>
+                                                                Bàn <?php echo htmlspecialchars($t['table_number']); ?> (<?php echo $t['capacity']; ?> ng)
+                                                            </option>
+                                                            <?php if ($isBooked): ?>
+                                                                <option disabled>Bàn <?php echo htmlspecialchars($t['table_number']); ?> (Đã đặt)</option>
+                                                            <?php endif; ?>
+                                                        <?php endforeach; ?>
+                                                    </select>
+                                                <?php endif; ?>
                                                 <button type="submit" class="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors" title="Xác nhận">
                                                     <i data-lucide="check" class="w-4.5 h-4.5"></i>
                                                 </button>

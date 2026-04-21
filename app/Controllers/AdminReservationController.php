@@ -19,9 +19,13 @@ class AdminReservationController extends AdminBaseController
         $reservationModel = new Reservation();
         $reservations = $reservationModel->getAllWithDetails();
 
+        $tableModel = new Table();
+        $tables = $tableModel->all();
+
         $this->render('admin.reservations.index', array(
             'title' => 'Quản lý Đặt bàn',
-            'reservations' => $reservations
+            'reservations' => $reservations,
+            'tables' => $tables
         ), 'layouts/admin');
     }
 
@@ -103,6 +107,7 @@ class AdminReservationController extends AdminBaseController
 
         $id = $_POST['id'] ?? '';
         $newStatus = $_POST['status'] ?? '';
+        $tableId = $_POST['table_id'] ?? null;
         
         $validStatuses = ['pending', 'confirmed', 'completed', 'cancelled'];
         if (!in_array($newStatus, $validStatuses)) {
@@ -120,12 +125,35 @@ class AdminReservationController extends AdminBaseController
             exit;
         }
 
-        $success = $reservationModel->updateStatus($id, $newStatus);
+        if ($newStatus === 'confirmed' && empty($reservation['table_id']) && empty($tableId)) {
+            $_SESSION['error'] = 'Vui lòng chọn bàn để xác nhận.';
+            header('Location: ' . url('/admin/reservations'));
+            exit;
+        }
+
+        $targetTableId = $tableId ?: $reservation['table_id'];
+
+        if ($newStatus === 'completed') {
+            if (empty($targetTableId)) {
+                $_SESSION['error'] = 'Bàn chưa được chỉ định, không thể check-in.';
+                header('Location: ' . url('/admin/reservations'));
+                exit;
+            }
+            
+            $orderModel = new \App\Models\Order();
+            if ($orderModel->hasActiveOrder($targetTableId)) {
+                $_SESSION['error'] = 'Bàn này đang có khách/đang phục vụ. Vui lòng dọn bàn hoặc chọn bàn khác trước khi Check-in!';
+                header('Location: ' . url('/admin/reservations'));
+                exit;
+            }
+        }
+
+        $success = $reservationModel->updateStatus($id, $newStatus, $tableId);
 
         // Handle check-in logic (transition to completed)
         if ($success && $newStatus === 'completed') {
             $orderModel = new \App\Models\Order();
-            $orderModel->createOrderForCheckin($reservation['table_id'], $_SESSION['user_id'] ?? null);
+            $orderModel->createOrderForCheckin($targetTableId, $_SESSION['user_id'] ?? null);
         }
 
         // AJAX Support
@@ -147,6 +175,17 @@ class AdminReservationController extends AdminBaseController
         }
 
         header('Location: ' . url('/admin/reservations'));
+        exit;
+    }
+
+    public function checkAvailability()
+    {
+        header('Content-Type: application/json');
+        $date = $_GET['date'] ?? date('Y-m-d');
+        $reservationModel = new Reservation();
+        $bookings = $reservationModel->getActiveReservationsByDate($date);
+        
+        echo json_encode(['success' => true, 'bookings' => $bookings]);
         exit;
     }
 

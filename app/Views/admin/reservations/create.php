@@ -149,32 +149,65 @@ document.addEventListener('DOMContentLoaded', function() {
     const partySizeInput = document.getElementById('party_size');
     const tableSelect = document.getElementById('table_id');
     const tableOptions = Array.from(tableSelect.options).filter(opt => opt.value !== "");
+    let currentBookings = [];
 
-    function filterTables() {
+    // Save original text
+    tableOptions.forEach(opt => opt.setAttribute('data-original-text', opt.textContent));
+
+    async function fetchBookings() {
+        const date = dateInput.value;
+        if (!date) return;
+        try {
+            const res = await fetch(`<?php echo url('/admin/reservations/api/check-availability'); ?>?date=${date}`);
+            const data = await res.json();
+            if(data.success) {
+                currentBookings = data.bookings;
+            } else {
+                currentBookings = [];
+            }
+        } catch(e) {
+            currentBookings = [];
+        }
+        updateUI();
+    }
+
+    function updateUI() {
+        const selectedTime = timeInput.value;
         const selectedSize = parseInt(partySizeInput.value) || 0;
-        let selectedFound = false;
 
         tableOptions.forEach(option => {
+            const tableId = option.value;
             const capacity = parseInt(option.getAttribute('data-capacity'));
-            if (capacity >= selectedSize) {
+            const isBookedAtSelectedTime = currentBookings.some(b => b.table_id === tableId && b.time === selectedTime);
+
+            if (capacity >= selectedSize && !isBookedAtSelectedTime) {
                 option.style.display = 'block';
                 option.disabled = false;
-                if (option.value === tableSelect.value) selectedFound = true;
+                option.textContent = option.getAttribute('data-original-text');
             } else {
                 option.style.display = 'none';
                 option.disabled = true;
+                if (isBookedAtSelectedTime) {
+                    option.textContent = option.getAttribute('data-original-text') + " (Đã đặt lúc " + selectedTime + ")";
+                    option.style.display = 'block'; // Still show it as disabled
+                } else {
+                    option.textContent = option.getAttribute('data-original-text');
+                }
+                
                 if (option.value === tableSelect.value) {
-                    tableSelect.value = ""; // Reset if current selection is no longer valid
+                    tableSelect.value = ""; // Reset invalid table
                 }
             }
         });
+        
+        if (!timeDropdown.classList.contains('hidden')) {
+            updateAdminTimeSlots();
+        }
     }
 
-    partySizeInput.addEventListener('input', filterTables);
+    partySizeInput.addEventListener('input', updateUI);
+    tableSelect.addEventListener('change', updateUI);
     
-    // Initial filter in case of validation back-fill
-    filterTables();
-
     // Time picker logic
     const timeToggle = document.getElementById('admin_time_toggle');
     const timeLabel = document.getElementById('admin_time_label');
@@ -202,6 +235,7 @@ document.addEventListener('DOMContentLoaded', function() {
         timeLabel.textContent = timeStr;
         timeDropdown.classList.add('hidden');
         timeChevron.classList.remove('rotate-180');
+        updateUI();
     }
 
     function updateAdminTimeSlots() {
@@ -236,18 +270,21 @@ document.addEventListener('DOMContentLoaded', function() {
             const btn = document.createElement('button');
             btn.type = 'button';
             
-            if (min < startMinutes && selectedDateStr === todayStr) {
-                // Past time today
-                btn.className = 'flex items-center justify-center rounded-lg border border-neutral-100 py-2.5 text-sm font-medium text-neutral-300 bg-neutral-50 cursor-not-allowed';
+            const isBookedForSelectedTable = tableSelect.value !== "" && currentBookings.some(b => b.table_id === tableSelect.value && b.time === timeStr);
+
+            if ((min < startMinutes && selectedDateStr === todayStr) || isBookedForSelectedTable) {
+                // Past time today or Booked
+                btn.className = 'flex flex-col items-center justify-center rounded-lg border border-neutral-100 py-2 text-sm font-medium text-neutral-300 bg-neutral-50 cursor-not-allowed';
                 btn.disabled = true;
+                btn.innerHTML = `<span>${timeStr}</span>` + (isBookedForSelectedTable ? `<span class="text-[10px] text-red-400">Đã đặt</span>` : '');
             } else {
                 btn.className = 'flex items-center justify-center rounded-lg border border-neutral-100 py-2.5 text-sm font-medium text-neutral-600 transition-all hover:border-primary-200 hover:bg-primary-50 hover:text-primary-600 cursor-pointer';
                 if (timeInput.value === timeStr) {
                     btn.className = 'flex items-center justify-center rounded-lg border border-primary-500 py-2.5 text-sm font-bold text-primary-600 bg-primary-50 transition-all cursor-pointer';
                 }
                 btn.onclick = () => selectAdminTime(timeStr);
+                btn.textContent = timeStr;
             }
-            btn.textContent = timeStr;
             
             timeSlotsContainer.appendChild(btn);
         }
@@ -259,9 +296,7 @@ document.addEventListener('DOMContentLoaded', function() {
     
     if (dateInput) {
         dateInput.addEventListener('change', () => {
-            if (!timeDropdown.classList.contains('hidden')) {
-                updateAdminTimeSlots();
-            }
+            fetchBookings();
         });
     }
 
@@ -274,5 +309,8 @@ document.addEventListener('DOMContentLoaded', function() {
             timeChevron.classList.remove('rotate-180');
         }
     });
+
+    // Initial fetch
+    fetchBookings();
 });
 </script>

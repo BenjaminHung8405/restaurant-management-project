@@ -51,6 +51,7 @@ return function (Router $router) {
 
     // Admin Reservations
     $router->get('/admin/reservations', array(\App\Controllers\AdminReservationController::class, 'index'));
+    $router->get('/admin/reservations/api/check-availability', array(\App\Controllers\AdminReservationController::class, 'checkAvailability'));
     $router->get('/admin/reservations/create', array(\App\Controllers\AdminReservationController::class, 'create'));
     $router->post('/admin/reservations/store', array(\App\Controllers\AdminReservationController::class, 'store'));
     $router->post('/admin/reservations/update-status', array(\App\Controllers\AdminReservationController::class, 'updateStatus'));
