@@ -159,40 +159,45 @@ class Order extends BaseModel
         $stmtFetch->execute(['order_id' => $orderId]);
         $dbItems = $stmtFetch->fetchAll(\PDO::FETCH_ASSOC);
 
-        // 2. Create lookup map for payload items
+        // 2. Create lookup map for payload items, summing quantities for same key
         $payloadMap = [];
         foreach ($payloadItems as $pItem) {
             $key = $pItem['id'] . '_' . md5(trim($pItem['notes'] ?? ''));
-            $payloadMap[$key] = $pItem;
+            if (!isset($payloadMap[$key])) {
+                $payloadMap[$key] = $pItem;
+            } else {
+                $payloadMap[$key]['quantity'] += $pItem['quantity'];
+            }
         }
 
-        // 3. Loop through current DB items
+        // 3. Process current DB items in TWO PASSES to avoid delta bugs.
+        // PASS 1: Deduct ALL immutable items (cooking/done) from payload
         foreach ($dbItems as $dbItem) {
-            $key = $dbItem['menu_item_id'] . '_' . md5(trim($dbItem['notes'] ?? ''));
-
             if ($dbItem['status'] !== 'pending') {
-                // RULE: Items that are 'cooking' or 'done' are IMMUTABLE.
-                // We preserve the database state and subtract from payload to avoid duplicates.
+                $key = $dbItem['menu_item_id'] . '_' . md5(trim($dbItem['notes'] ?? ''));
                 if (isset($payloadMap[$key])) {
-                    // Logic Adjustment: Decrement quantity in map so we only add/update what's missing.
                     $payloadMap[$key]['quantity'] -= $dbItem['quantity'];
                     if ($payloadMap[$key]['quantity'] <= 0) {
                         unset($payloadMap[$key]);
                     }
                 }
-            } else {
-                // Item is pending
+            }
+        }
+
+        // PASS 2: Handle pending items with the REMAINING payload quantity
+        foreach ($dbItems as $dbItem) {
+            if ($dbItem['status'] === 'pending') {
+                $key = $dbItem['menu_item_id'] . '_' . md5(trim($dbItem['notes'] ?? ''));
                 if (isset($payloadMap[$key]) && $payloadMap[$key]['quantity'] > 0) {
-                    // UPDATE quantity. Adjusting for cooking items if any.
                     $sqlUpd = "UPDATE order_items SET quantity = :qty WHERE id = :id";
                     $stmtUpd = $this->db->prepare($sqlUpd);
                     $stmtUpd->execute([
                         'qty' => $payloadMap[$key]['quantity'],
                         'id' => $dbItem['id']
                     ]);
-                    unset($payloadMap[$key]);
+                    unset($payloadMap[$key]); // Fully consumed by this pending item row
                 } else {
-                    // Staff removed it or it's fully covered by cooking items
+                    // Remainder is 0 or negative -> this pending item is no longer needed
                     $sqlDel = "DELETE FROM order_items WHERE id = :id";
                     $stmtDel = $this->db->prepare($sqlDel);
                     $stmtDel->execute(['id' => $dbItem['id']]);

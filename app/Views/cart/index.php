@@ -156,7 +156,7 @@
                                 <?php if (empty($currentTableId)): ?>
                                     <div id="table-warning" class="mt-3 flex gap-2 items-start text-orange-600 animate-pulse">
                                         <i data-lucide="alert-circle" class="w-3.5 h-3.5 mt-0.5"></i>
-                                        <p class="text-[10px] font-bold leading-tight">Vui lòng chọn bàn hoặc quét mã QR trước khi đặt món.</p>
+                                        <p class="text-[10px] font-bold leading-tight">Vui lòng chọn bàn đang được phục vụ trước khi gửi món.</p>
                                     </div>
                                 <?php endif; ?>
                             </div>
@@ -347,6 +347,10 @@
                 setTimeout(() => {
                     selector.parentElement.classList.remove('animate-pulse', 'scale-[1.02]');
                 }, 500);
+            } else {
+                // Handle specific error (e.g. table not serving)
+                alert(data.message || 'Không thể chọn bàn này.');
+                selector.value = ''; // Reset selection
             }
         } catch (err) {
             console.error('Failed to set table:', err);
@@ -368,7 +372,7 @@
             }, 2000);
 
             // Alert for user
-            alert('Vui lòng chọn bàn của bạn trước khi gửi yêu cầu đến bếp!');
+            alert('Vui lòng chọn bàn của bạn (đang phục vụ) trước khi gửi yêu cầu đến bếp!');
             return false;
         }
         return true;

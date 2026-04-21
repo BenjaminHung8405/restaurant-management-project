@@ -394,7 +394,8 @@
             price: parseFloat(item.unit_price),
             quantity: parseInt(item.quantity),
             status: item.status,
-            image_url: item.image_url
+            image_url: item.image_url,
+            notes: item.notes || ''
         }));
         
         if (orderRes.order) {
@@ -444,7 +445,8 @@
     // --- Cart Actions ---
 
     function addToCart(item) {
-        const existing = cart.find(c => c.id === (item.id || item.menu_item_id));
+        // Find existing pending item with same id and EMPTY notes (do not merge with locked items)
+        const existing = cart.find(c => c.id === (item.id || item.menu_item_id) && (c.notes || '') === '' && (!c.status || c.status === 'pending'));
         if (existing) {
             existing.quantity++;
         } else {
@@ -453,21 +455,37 @@
                 name: item.name,
                 price: parseFloat(item.price),
                 quantity: 1,
-                image_url: item.image_url
+                status: 'pending',
+                image_url: item.image_url,
+                notes: ''
             });
         }
         updateCartUI();
     }
 
-    function updateQuantity(id, delta) {
-        const item = cart.find(c => c.id === id);
+    function updateQuantity(index, delta) {
+        const item = cart[index];
         if (!item) return;
         
         item.quantity += delta;
         if (item.quantity <= 0) {
-            cart = cart.filter(c => c.id !== id);
+            cart.splice(index, 1);
         }
         updateCartUI();
+    }
+
+    function updateItemNote(index, note) {
+        const item = cart[index];
+        if (!item) return;
+        
+        item.notes = note.trim();
+        // Merge items with same ID and notes if applicable, and ensure target is pending
+        const matchingIndex = cart.findIndex((c, i) => i !== index && c.id === item.id && (c.notes || '') === item.notes && (!c.status || c.status === 'pending'));
+        if (matchingIndex !== -1) {
+            cart[matchingIndex].quantity += item.quantity;
+            cart.splice(index, 1);
+            updateCartUI();
+        }
     }
 
     function clearCart() {
@@ -505,32 +523,42 @@
         if (checkoutBtn) checkoutBtn.disabled = !currentTableSession.orderId;
 
         let total = 0;
-        container.innerHTML = cart.map(item => {
+        container.innerHTML = cart.map((item, index) => {
             const itemTotal = item.price * item.quantity;
             total += itemTotal;
             const isLocked = item.status === 'cooking' || item.status === 'done';
+            const safeNotes = (item.notes || '').replace(/"/g, '&quot;');
             
             return `
-                <div class="group flex items-center gap-4 bg-white p-4 rounded-[1.75rem] border border-slate-100 shadow-sm hover:shadow-md transition-all animate-[modal-in_0.3s_ease-out] ${isLocked ? 'bg-slate-50/50 opacity-90' : ''}">
-                    <img src="${item.image_url}" class="w-14 h-14 rounded-2xl object-cover shrink-0 shadow-sm border border-slate-50">
-                    <div class="flex-1 min-w-0">
-                        <div class="flex items-center gap-2">
-                            <h5 class="font-black text-slate-800 text-xs truncate">${item.name}</h5>
-                            ${item.status === 'cooking' ? '<span class="px-2 py-0.5 bg-amber-100 text-amber-600 rounded-md text-[8px] font-black uppercase tracking-tighter shrink-0 animate-pulse">Đang nấu</span>' : ''}
-                            ${item.status === 'done' ? '<span class="px-2 py-0.5 bg-emerald-100 text-emerald-600 rounded-md text-[8px] font-black uppercase tracking-tighter shrink-0">Xong</span>' : ''}
+                <div class="group flex flex-col gap-3 bg-white p-4 rounded-[1.75rem] border border-slate-100 shadow-sm hover:shadow-md transition-all animate-[modal-in_0.3s_ease-out] ${isLocked ? 'bg-slate-50/50 opacity-90' : ''}">
+                    <!-- Main Item Info -->
+                    <div class="flex items-center gap-4">
+                        <img src="${item.image_url}" class="w-14 h-14 rounded-2xl object-cover shrink-0 shadow-sm border border-slate-50">
+                        <div class="flex-1 min-w-0">
+                            <div class="flex items-center gap-2">
+                                <h5 class="font-black text-slate-800 text-xs truncate">${item.name}</h5>
+                                ${item.status === 'cooking' ? '<span class="px-2 py-0.5 bg-amber-100 text-amber-600 rounded-md text-[8px] font-black uppercase tracking-tighter shrink-0 animate-pulse">Đang nấu</span>' : ''}
+                                ${item.status === 'done' ? '<span class="px-2 py-0.5 bg-emerald-100 text-emerald-600 rounded-md text-[8px] font-black uppercase tracking-tighter shrink-0">Xong</span>' : ''}
+                            </div>
+                            <p class="text-[10px] text-primary-600 font-black mt-1 tabular-nums">${new Intl.NumberFormat('vi-VN').format(item.price)}₫</p>
                         </div>
-                        <p class="text-[10px] text-primary-600 font-black mt-1 tabular-nums">${new Intl.NumberFormat('vi-VN').format(item.price)}₫</p>
+                        <div class="flex items-center gap-1.5 bg-slate-50 p-1 rounded-2xl border border-slate-100">
+                            <button onclick="updateQuantity(${index}, -1)" ${isLocked ? 'disabled' : ''} 
+                                class="w-8 h-8 flex items-center justify-center bg-white rounded-xl text-slate-400 hover:text-rose-500 shadow-sm transition-all active:scale-90 disabled:opacity-30 disabled:pointer-events-none">
+                                <i data-lucide="minus" class="w-3.5 h-3.5"></i>
+                            </button>
+                            <span class="w-8 text-center text-xs font-black text-slate-800 tabular-nums">${item.quantity}</span>
+                            <button onclick="updateQuantity(${index}, 1)" ${isLocked ? 'disabled' : ''} 
+                                class="w-8 h-8 flex items-center justify-center bg-white rounded-xl text-slate-400 hover:text-emerald-500 shadow-sm transition-all active:scale-90 disabled:opacity-30 disabled:pointer-events-none">
+                                <i data-lucide="plus" class="w-3.5 h-3.5"></i>
+                            </button>
+                        </div>
                     </div>
-                    <div class="flex items-center gap-1.5 bg-slate-50 p-1 rounded-2xl border border-slate-100">
-                        <button onclick="updateQuantity('${item.id}', -1)" ${isLocked ? 'disabled' : ''} 
-                            class="w-8 h-8 flex items-center justify-center bg-white rounded-xl text-slate-400 hover:text-rose-500 shadow-sm transition-all active:scale-90 disabled:opacity-30 disabled:pointer-events-none">
-                            <i data-lucide="minus" class="w-3.5 h-3.5"></i>
-                        </button>
-                        <span class="w-8 text-center text-xs font-black text-slate-800 tabular-nums">${item.quantity}</span>
-                        <button onclick="updateQuantity('${item.id}', 1)" ${isLocked ? 'disabled' : ''} 
-                            class="w-8 h-8 flex items-center justify-center bg-white rounded-xl text-slate-400 hover:text-emerald-500 shadow-sm transition-all active:scale-90 disabled:opacity-30 disabled:pointer-events-none">
-                            <i data-lucide="plus" class="w-3.5 h-3.5"></i>
-                        </button>
+                    <!-- Notes Input -->
+                    <div class="flex items-center relative">
+                        <i data-lucide="pen-line" class="w-4 h-4 text-slate-400 absolute ml-3 pointer-events-none"></i>
+                        <input type="text" placeholder="Ghi chú món (VD: ít cay, không hành...)" value="${safeNotes}" onchange="updateItemNote(${index}, this.value)" ${isLocked ? 'disabled' : ''} 
+                            class="w-full text-xs font-medium pl-9 pr-3 py-2 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500 placeholder-slate-400 text-slate-700 transition-all ${isLocked ? 'opacity-50 cursor-not-allowed' : 'hover:border-slate-300'}">
                     </div>
                 </div>
             `;

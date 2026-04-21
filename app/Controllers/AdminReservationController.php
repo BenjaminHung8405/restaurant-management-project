@@ -36,7 +36,8 @@ class AdminReservationController extends AdminBaseController
             'formData' => array(
                 'customer_name' => '',
                 'customer_phone' => '',
-                'reservation_time' => date('Y-m-d\TH:i'), // Standard datetime-local format
+                'reservation_date' => date('Y-m-d'),
+                'reservation_time' => date('H:i'),
                 'party_size' => 2,
                 'table_id' => $_GET['table_id'] ?? '',
                 'notes' => ''
@@ -53,6 +54,7 @@ class AdminReservationController extends AdminBaseController
         $formData = array(
             'customer_name' => trim($_POST['customer_name'] ?? ''),
             'customer_phone' => trim($_POST['customer_phone'] ?? ''),
+            'reservation_date' => trim($_POST['reservation_date'] ?? ''),
             'reservation_time' => trim($_POST['reservation_time'] ?? ''),
             'party_size' => (int)($_POST['party_size'] ?? 0),
             'table_id' => trim($_POST['table_id'] ?? ''),
@@ -66,7 +68,7 @@ class AdminReservationController extends AdminBaseController
                 'id' => generate_uuid(),
                 'user_id' => $_SESSION['user_id'] ?? null,
                 'table_id' => $formData['table_id'],
-                'reservation_time' => str_replace('T', ' ', $formData['reservation_time']) . ':00',
+                'reservation_time' => $formData['reservation_date'] . ' ' . $formData['reservation_time'] . ':00',
                 'guest_count' => $formData['party_size'],
                 'guest_name' => $formData['customer_name'],
                 'guest_phone' => $formData['customer_phone'],
@@ -168,10 +170,10 @@ class AdminReservationController extends AdminBaseController
         }
 
         // 3. Thời gian đặt bàn: không trống, phải ở tương lai
-        if (empty($data['reservation_time'])) {
+        if (empty($data['reservation_date']) || empty($data['reservation_time'])) {
             $errors[] = 'Thời gian đặt bàn không được để trống.';
         } else {
-            $resTime = str_replace('T', ' ', $data['reservation_time']);
+            $resTime = $data['reservation_date'] . ' ' . $data['reservation_time'];
             if (strtotime($resTime) < time()) {
                 $errors[] = 'Thời gian đặt bàn phải ở tương lai.';
             }

@@ -25,6 +25,19 @@ class Table extends BaseModel
         return $statement->fetchAll(\PDO::FETCH_ASSOC);
     }
 
+    public function getOccupiedTables()
+    {
+        $sql = "
+            SELECT t.id, t.table_number, t.capacity, t.status 
+            FROM {$this->table} t
+            INNER JOIN orders o ON t.id = o.table_id AND o.order_status IN ('pending', 'preparing', 'serving')
+            GROUP BY t.id
+            ORDER BY t.table_number ASC
+        ";
+        $statement = $this->db->query($sql);
+        return $statement->fetchAll(\PDO::FETCH_ASSOC);
+    }
+
     public function find($id)
     {
         $sql = 'SELECT * FROM ' . $this->table . ' WHERE id = :id LIMIT 1';

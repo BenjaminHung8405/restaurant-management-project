@@ -42,7 +42,7 @@ class CartController extends BaseController
         }
 
         $tableModel = new Table();
-        $tables = $tableModel->getAllAvailable();
+        $tables = $tableModel->getOccupiedTables();
         $currentTableId = isset($_SESSION['table_id']) ? $_SESSION['table_id'] : null;
 
         $this->render('cart/index', array(
@@ -65,8 +65,17 @@ class CartController extends BaseController
         $tableModel = new Table();
         $table = $tableModel->find($tableId);
 
-        if (!$table || ($table['status'] ?? '') !== 'available') {
-            return $this->json(array('success' => false, 'message' => 'Bàn được chọn hiện không khả dụng.'));
+        // Validation change: Only allow tables that are already "Serving" (have an active order)
+        // We check if it's in the getOccupiedTables list or check the orders table directly.
+        // For simplicity, we check if the table exists and if it has an active order.
+        $db = \App\Core\Database::connection();
+        $sql = "SELECT id FROM orders WHERE table_id = :table_id AND order_status IN ('pending', 'preparing', 'serving') LIMIT 1";
+        $stmt = $db->prepare($sql);
+        $stmt->execute(['table_id' => $tableId]);
+        $hasActiveOrder = $stmt->fetch();
+
+        if (!$table || !$hasActiveOrder) {
+            return $this->json(array('success' => false, 'message' => 'Bàn này hiện chưa được mở phiên phục vụ. Vui lòng liên hệ nhân viên hoặc quét mã QR.'));
         }
 
         $_SESSION['table_id'] = $tableId;
@@ -249,28 +258,48 @@ class CartController extends BaseController
         // For demo, we check session or default to a demo table
         $tableId = isset($_SESSION['table_id']) ? trim((string) $_SESSION['table_id']) : null;
 
+        $existingOrderId = null;
         if ($tableId !== null && $tableId !== '') {
             if (!$this->isValidUuid($tableId)) {
                 $tableId = null;
                 unset($_SESSION['table_id']);
             } else {
                 $table = $tableModel->find($tableId);
-                if (!$table || ($table['status'] ?? '') !== 'available') {
+                
+                // Validation: Must have active order
+                $db = \App\Core\Database::connection();
+                $sql = "SELECT id FROM orders WHERE table_id = :table_id AND order_status IN ('pending', 'preparing', 'serving') LIMIT 1";
+                $stmt = $db->prepare($sql);
+                $stmt->execute(['table_id' => $tableId]);
+                $hasActiveOrder = $stmt->fetch();
+
+                if (!$table || !$hasActiveOrder) {
                     $tableId = null;
                     unset($_SESSION['table_id']);
+                } else {
+                    $existingOrderId = $hasActiveOrder['id'];
                 }
             }
         }
 
         if (!$tableId) {
-            // Check if there are any tables available
-            $tables = $tableModel->getAllAvailable();
+            // Check if there are any tables active/serving
+            $tables = $tableModel->getOccupiedTables();
             if (!empty($tables)) {
-                $tableId = $tables[0]['id']; // Assign first available table for demo
+                $tableId = $tables[0]['id']; 
                 $_SESSION['table_id'] = $tableId;
+
+                $db = \App\Core\Database::connection();
+                $sql = "SELECT id FROM orders WHERE table_id = :table_id AND order_status IN ('pending', 'preparing', 'serving') LIMIT 1";
+                $stmt = $db->prepare($sql);
+                $stmt->execute(['table_id' => $tableId]);
+                $hasActiveOrder = $stmt->fetch();
+                if ($hasActiveOrder) {
+                    $existingOrderId = $hasActiveOrder['id'];
+                }
             } else {
                 // Fallback or error
-                $this->setCartFlashError('Hiện không có bàn trống để tiếp nhận đơn hàng.');
+                $this->setCartFlashError('Vui lòng chọn bàn đang phục vụ để tiếp tục đặt món.');
                 header('Location: ' . url('/cart'));
                 exit;
             }
@@ -308,17 +337,27 @@ class CartController extends BaseController
         }
 
         try {
-            $orderId = $this->uuid();
-            $orderModel->create(array(
-                'id' => $orderId,
-                'user_id' => isset($_SESSION['user_id']) ? $_SESSION['user_id'] : null,
-                'table_id' => $tableId,
-                'total_amount' => $grandTotal,
-                'order_status' => 'pending',
-                'payment_status' => 'unpaid'
-            ));
-
-            $orderModel->addItems($orderId, $cartItems);
+            if ($existingOrderId) {
+                $orderId = $existingOrderId;
+                $orderModel->addItems($orderId, $cartItems);
+                
+                $db = \App\Core\Database::connection();
+                $sqlTotal = "UPDATE orders SET total_amount = total_amount + :grand_total, order_status = IF(order_status = 'serving', 'preparing', order_status) WHERE id = :id";
+                $stmtTotal = $db->prepare($sqlTotal);
+                $stmtTotal->execute(['grand_total' => $grandTotal, 'id' => $orderId]);
+            } else {
+                $orderId = $this->uuid();
+                $orderModel->create(array(
+                    'id' => $orderId,
+                    'user_id' => isset($_SESSION['user_id']) ? $_SESSION['user_id'] : null,
+                    'table_id' => $tableId,
+                    'total_amount' => $grandTotal,
+                    'order_status' => 'pending',
+                    'payment_status' => 'unpaid'
+                ));
+    
+                $orderModel->addItems($orderId, $cartItems);
+            }
 
             // Clear cart
             unset($_SESSION['cart']);

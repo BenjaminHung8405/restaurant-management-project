@@ -49,14 +49,43 @@
                     </div>
                 </div>
 
+                <!-- Reservation Date -->
+                <div class="space-y-2.5">
+                    <label for="reservation_date" class="text-sm font-bold text-slate-700 ml-1">Ngày đặt <span class="text-red-500">*</span></label>
+                    <div class="relative group">
+                        <div class="absolute inset-y-0 left-0 pl-5 flex items-center pointer-events-none text-neutral-400 group-focus-within:text-primary-500 transition-colors">
+                            <i data-lucide="calendar" class="w-5 h-5"></i>
+                        </div>
+                        <input
+                            id="reservation_date"
+                            name="reservation_date"
+                            type="date"
+                            value="<?php echo htmlspecialchars($formData['reservation_date'] ?? date('Y-m-d')); ?>"
+                            class="w-full rounded-2xl border border-neutral-200 bg-neutral-50/50 pl-12 pr-5 py-4 outline-none focus:bg-white focus:ring-4 focus:ring-primary-500/10 focus:border-primary-500 transition-all font-medium"
+                            required
+                        >
+                    </div>
+                </div>
+
                 <!-- Reservation Time -->
-                <div class="space-y-2">
-                    <label for="reservation_time" class="block text-sm font-bold text-slate-700">Thời gian đặt bàn <span class="text-red-500">*</span></label>
-                    <div class="relative">
-                        <i data-lucide="calendar" class="absolute left-3 top-1/2 -translate-y-1/2 w-4.5 h-4.5 text-slate-400"></i>
-                        <input type="datetime-local" id="reservation_time" name="reservation_time" required
-                               value="<?php echo htmlspecialchars($formData['reservation_time'] ?? ''); ?>"
-                               class="w-full pl-10 pr-4 py-2.5 bg-slate-100 border border-slate-200 rounded-xl text-sm font-medium focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500 transition-all outline-none cursor-pointer">
+                <div class="space-y-2.5">
+                    <label for="reservation_time" class="text-sm font-bold text-slate-700 ml-1">Giờ đặt <span class="text-red-500">*</span></label>
+                    <div class="relative group">
+                        <button type="button" id="admin_time_toggle" class="w-full flex items-center justify-between rounded-2xl border border-neutral-200 bg-neutral-50/50 pl-12 pr-5 py-4 outline-none focus:bg-white focus:ring-4 focus:ring-primary-500/10 focus:border-primary-500 transition-all font-medium text-left cursor-pointer text-slate-700">
+                            <span id="admin_time_label"><?php echo htmlspecialchars($formData['reservation_time'] ?? date('H:i')); ?></span>
+                            <i data-lucide="chevron-down" id="admin_time_chevron" class="w-5 h-5 text-neutral-400 transition-transform duration-200"></i>
+                        </button>
+                        <div class="absolute inset-y-0 left-0 pl-5 flex items-center pointer-events-none text-neutral-400 group-focus-within:text-primary-500 transition-colors">
+                            <i data-lucide="clock" class="w-5 h-5"></i>
+                        </div>
+                        
+                        <!-- Custom Dropdown Menu -->
+                        <div id="admin_time_dropdown" class="absolute left-0 right-0 z-[90] mt-2 hidden max-h-64 overflow-y-auto rounded-xl border border-neutral-200 bg-white shadow-xl custom-scrollbar">
+                            <div id="admin_time_slots_container" class="grid grid-cols-3 gap-2 p-3">
+                                <!-- Time slots will be injected here -->
+                            </div>
+                        </div>
+                        <input type="hidden" id="reservation_time" name="reservation_time" value="<?php echo htmlspecialchars($formData['reservation_time'] ?? date('H:i')); ?>" required>
                     </div>
                 </div>
 
@@ -145,5 +174,105 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // Initial filter in case of validation back-fill
     filterTables();
+
+    // Time picker logic
+    const timeToggle = document.getElementById('admin_time_toggle');
+    const timeLabel = document.getElementById('admin_time_label');
+    const timeDropdown = document.getElementById('admin_time_dropdown');
+    const timeSlotsContainer = document.getElementById('admin_time_slots_container');
+    const timeInput = document.getElementById('reservation_time');
+    const dateInput = document.getElementById('reservation_date');
+    const timeChevron = document.getElementById('admin_time_chevron');
+
+    const OPENING_HOUR = 10;
+    const CLOSING_HOUR = 22;
+    const STEP_MINUTES = 30;
+
+    function toggleAdminTimeDropdown(e) {
+        if(e) e.preventDefault();
+        timeDropdown.classList.toggle('hidden');
+        timeChevron.classList.toggle('rotate-180');
+        if (!timeDropdown.classList.contains('hidden')) {
+            updateAdminTimeSlots();
+        }
+    }
+
+    function selectAdminTime(timeStr) {
+        timeInput.value = timeStr;
+        timeLabel.textContent = timeStr;
+        timeDropdown.classList.add('hidden');
+        timeChevron.classList.remove('rotate-180');
+    }
+
+    function updateAdminTimeSlots() {
+        const selectedDateStr = dateInput.value;
+        const now = new Date();
+        const dd = String(now.getDate()).padStart(2, '0');
+        const mm = String(now.getMonth() + 1).padStart(2, '0');
+        const yyyy = now.getFullYear();
+        const todayStr = `${yyyy}-${mm}-${dd}`;
+        
+        let startMinutes = OPENING_HOUR * 60;
+        const endMinutes = CLOSING_HOUR * 60;
+
+        if (selectedDateStr === todayStr) {
+            const currentMinutes = now.getHours() * 60 + now.getMinutes();
+            const roundedNow = Math.ceil(currentMinutes / STEP_MINUTES) * STEP_MINUTES;
+            startMinutes = Math.max(startMinutes, roundedNow + STEP_MINUTES);
+        }
+
+        timeSlotsContainer.innerHTML = '';
+        
+        if (startMinutes > endMinutes) {
+            timeSlotsContainer.innerHTML = '<div class="col-span-3 py-4 text-center text-xs text-neutral-400 italic font-medium">Hết khung giờ khả dụng cho ngày này</div>';
+            return;
+        }
+
+        for (let min = OPENING_HOUR * 60; min <= endMinutes; min += STEP_MINUTES) {
+            const h = Math.floor(min / 60);
+            const m = min % 60;
+            const timeStr = `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}`;
+            
+            const btn = document.createElement('button');
+            btn.type = 'button';
+            
+            if (min < startMinutes && selectedDateStr === todayStr) {
+                // Past time today
+                btn.className = 'flex items-center justify-center rounded-lg border border-neutral-100 py-2.5 text-sm font-medium text-neutral-300 bg-neutral-50 cursor-not-allowed';
+                btn.disabled = true;
+            } else {
+                btn.className = 'flex items-center justify-center rounded-lg border border-neutral-100 py-2.5 text-sm font-medium text-neutral-600 transition-all hover:border-primary-200 hover:bg-primary-50 hover:text-primary-600 cursor-pointer';
+                if (timeInput.value === timeStr) {
+                    btn.className = 'flex items-center justify-center rounded-lg border border-primary-500 py-2.5 text-sm font-bold text-primary-600 bg-primary-50 transition-all cursor-pointer';
+                }
+                btn.onclick = () => selectAdminTime(timeStr);
+            }
+            btn.textContent = timeStr;
+            
+            timeSlotsContainer.appendChild(btn);
+        }
+    }
+
+    if (timeToggle) {
+        timeToggle.addEventListener('click', toggleAdminTimeDropdown);
+    }
+    
+    if (dateInput) {
+        dateInput.addEventListener('change', () => {
+            if (!timeDropdown.classList.contains('hidden')) {
+                updateAdminTimeSlots();
+            }
+        });
+    }
+
+    // Close dropdown on click outside
+    window.addEventListener('mousedown', (e) => {
+        if (timeDropdown && !timeDropdown.classList.contains('hidden') && 
+            !timeDropdown.contains(e.target) && 
+            !timeToggle.contains(e.target)) {
+            timeDropdown.classList.add('hidden');
+            timeChevron.classList.remove('rotate-180');
+        }
+    });
 });
 </script>
