@@ -40,10 +40,6 @@
                 </div>
 
                 <div class="space-y-3">
-                    <div class="flex items-center justify-between ml-1">
-                        <label for="password" class="text-sm font-bold text-neutral-700">Mật khẩu</label>
-                        <a href="#" class="text-xs font-bold text-primary-500 hover:text-primary-600 tracking-tight">Quên mật khẩu?</a>
-                    </div>
                     <div class="relative group">
                         <div class="absolute inset-y-0 left-0 pl-5 flex items-center pointer-events-none text-neutral-400 group-focus-within:text-primary-500 transition-colors">
                             <i data-lucide="key-round" class="w-5 h-5"></i>
@@ -59,10 +55,6 @@
                     </div>
                 </div>
 
-                <div class="flex items-center ml-1">
-                    <input id="remember" type="checkbox" class="w-5 h-5 text-primary-500 border-neutral-300 rounded-lg focus:ring-primary-500 cursor-pointer shadow-sm">
-                    <label for="remember" class="ml-3 text-sm font-bold text-neutral-500 cursor-pointer select-none">Ghi nhớ tôi</label>
-                </div>
 
                 <button
                     type="submit"
@@ -72,12 +64,6 @@
                 </button>
             </form>
 
-            <div class="mt-12 pt-8 border-t border-neutral-50 text-center">
-                <p class="text-neutral-500 text-sm font-medium">
-                    Chưa có tài khoản? 
-                    <a href="#" class="font-bold text-primary-500 hover:text-primary-600 ml-1">Đăng ký thành viên</a>
-                </p>
-            </div>
         </div>
     </div>
 </section>
