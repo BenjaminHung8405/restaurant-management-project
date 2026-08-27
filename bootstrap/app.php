@@ -9,6 +9,11 @@ require APP_PATH . '/Helpers/functions.php';
 
 loadEnv(BASE_PATH . '/.env');
 
+$composerAutoload = BASE_PATH . '/vendor/autoload.php';
+if (file_exists($composerAutoload)) {
+    require_once $composerAutoload;
+}
+
 $timezone = env('APP_TIMEZONE', 'UTC');
 if (!empty($timezone)) {
     date_default_timezone_set($timezone);

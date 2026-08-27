@@ -1,0 +1,66 @@
+services:
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: restaurant_app
+    ports:
+      - "8080:80"
+    environment:
+      APP_ENV: ${APP_ENV:-local}
+      APP_DEBUG: ${APP_DEBUG:-true}
+      APP_TIMEZONE: ${APP_TIMEZONE:-Asia/Ho_Chi_Minh}
+      APP_URL: ${APP_URL:-http://localhost:8080}
+      DB_HOST: db
+      DB_PORT: 3306
+      DB_DATABASE: ${DB_DATABASE:-restaurant_db}
+      DB_USERNAME: ${DB_USERNAME:-restaurant}
+      DB_PASSWORD: ${DB_PASSWORD}
+      DB_CHARSET: utf8mb4
+    volumes:
+      - .:/var/www/html
+    depends_on:
+      db:
+        condition: service_healthy
+    networks: [restaurant_network]
+    restart: unless-stopped
+
+  db:
+    image: mariadb:10.11
+    container_name: restaurant_db
+    environment:
+      MARIADB_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+      MARIADB_DATABASE: ${MYSQL_DATABASE:-restaurant_db}
+      MARIADB_USER: ${MYSQL_USER:-restaurant}
+      MARIADB_PASSWORD: ${MYSQL_PASSWORD}
+    volumes:
+      - db_data:/var/lib/mysql
+      - ./schema.sql:/docker-entrypoint-initdb.d/01-schema.sql:ro
+    healthcheck:
+      test: ["CMD-SHELL", "mariadb-admin ping -h localhost -u root -p\"$${MARIADB_ROOT_PASSWORD}\" --silent"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 30s
+    networks: [restaurant_network]
+    restart: unless-stopped
+
+  phpmyadmin:
+    image: phpmyadmin:latest
+    profiles: [tools]
+    environment:
+      PMA_HOST: db
+      PMA_PORT: 3306
+      UPLOAD_LIMIT: 10M
+    ports:
+      - "8081:80"
+    depends_on:
+      db:
+        condition: service_healthy
+    networks: [restaurant_network]
+
+volumes:
+  db_data:
+
+networks:
+  restaurant_network:

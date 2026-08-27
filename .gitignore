@@ -5,3 +5,9 @@
 
 /storage/cache/*
 !/storage/cache/.gitkeep
+
+/vendor/
+/storage/sessions/*
+!/storage/sessions/.gitkeep
+/storage/views/*
+!/storage/views/.gitkeep
